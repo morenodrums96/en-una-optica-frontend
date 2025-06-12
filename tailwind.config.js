@@ -1,11 +1,17 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}',
   ],
+    darkMode: 'class', // 👈 esto es obligatorio con next-themes
+
   theme: {
     extend: {
+      transitionProperty: {
+        'colors': 'background-color, border-color, color, fill, stroke',
+      },
       colors: {
         primary: {
           50: '#F0FBFA',
