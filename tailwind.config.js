@@ -1,16 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}',
   ],
-    darkMode: 'class', // 👈 esto es obligatorio con next-themes
+  darkMode: 'class',
 
   theme: {
     extend: {
       transitionProperty: {
-        'colors': 'background-color, border-color, color, fill, stroke',
+        colors: 'background-color, border-color, color, fill, stroke',
       },
       colors: {
         primary: {
@@ -26,6 +25,15 @@ module.exports = {
           900: '#254C54',
           950: '#143238',
         },
+      },
+      keyframes: {
+        'slide-up': {
+          from: { transform: 'translateY(100%)', opacity: '0' },
+          to: { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      animation: {
+        'slide-up': 'slide-up 0.3s ease-out',
       },
     },
   },
