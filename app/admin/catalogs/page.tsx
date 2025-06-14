@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { PlusCircle, Settings } from 'lucide-react'
-import { getCatalogByGroup, postCatalogEntry } from '@/lib/catalogApi'
+import { getCatalogByGroup, postCatalogEntry, updateCatalogEntry, toggleCatalogActiveStatus } from '@/lib/catalogApi'
 import FloatingMessage from '@/components/FloatingMessage'
+import CatalogRow from '@/components/CatalogRow'
 
 type CatalogItem = {
   _id?: string
@@ -27,7 +28,9 @@ export default function CatalogsPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [openRow, setOpenRow] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+
 
   useEffect(() => {
     getCatalogByGroup(activeTab)
@@ -52,23 +55,51 @@ export default function CatalogsPage() {
     }
   }
 
-  const handleDelete = async (_id: string) => {
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/catalogs/${_id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      })
-      if (!res.ok) throw new Error('Error al eliminar')
+      const newStatus = !currentStatus
+      const message = await toggleCatalogActiveStatus(id, newStatus)
 
-      setCatalogs((prev) => prev.filter(item => item._id !== _id))
-      setSuccessMsg('Eliminado correctamente')
+      setCatalogs(prev =>
+        prev.map(item =>
+          item._id === id ? { ...item, active: newStatus } : item
+        )
+      )
+
+      setSuccessMsg(message)
     } catch (err: any) {
       setErrorMsg(err.message)
     }
   }
 
+
   const handleEdit = (item: CatalogItem) => {
-    console.log('Editar item:', item)
+    setIsEditing(true)
+    setEditingId(item._id!)
+    setLabel(item.label)
+    setShowModal(true)
+  }
+
+  const handleUpdate = async () => {
+    if (!editingId) return
+
+    try {
+      const message = await updateCatalogEntry(editingId, label)
+
+      setCatalogs(prev =>
+        prev.map(item =>
+          item._id === editingId ? { ...item, label } : item
+        )
+      )
+
+      setSuccessMsg(message)
+      setShowModal(false)
+      setLabel('')
+      setEditingId(null)
+      setIsEditing(false)
+    } catch (err: any) {
+      setErrorMsg(err.message)
+    }
   }
 
   return (
@@ -125,35 +156,16 @@ export default function CatalogsPage() {
             </thead>
             <tbody className="divide-y divide-primary-100 dark:divide-primary-800">
               {catalogs.map((item) => (
-                <tr key={item._id} className="hover:bg-primary-50 dark:hover:bg-primary-800 relative">
-                  <td className="px-4 py-3">{item.label}</td>
-                  <td className="px-4 py-3">{item.active ? 'Sí' : 'No'}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setOpenRow(openRow === item._id ? null : item._id || null)}
-                      className="p-2 rounded hover:bg-primary-100 dark:hover:bg-primary-800"
-                    >
-                      <Settings className="h-5 w-5 text-primary-700 dark:text-primary-100" />
-                    </button>
-                    {openRow === item._id && (
-                      <div className="absolute mt-2 right-4 bg-white dark:bg-primary-900 shadow rounded border border-primary-200 dark:border-primary-700 z-50">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="block w-full px-4 py-2 text-sm text-primary-900 dark:text-white hover:bg-primary-100 dark:hover:bg-primary-800"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item._id!)}
-                          className="block w-full px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-red-900 dark:text-red-400"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
+                <CatalogRow
+                  key={item._id}
+                  item={item}
+                  openRow={openRow}
+                  setOpenRow={setOpenRow}
+                  onEdit={handleEdit}
+                  onToggleActive={handleToggleActive}
+                />
               ))}
+
             </tbody>
           </table>
         )}
@@ -174,17 +186,24 @@ export default function CatalogsPage() {
             />
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false)
+                  setLabel('') // ← limpia el input
+                  setIsEditing(false)
+                  setEditingId(null)
+                }}
                 className="px-4 py-2 rounded bg-gray-200 dark:bg-primary-700 text-primary-900 dark:text-white"
               >
                 Cancelar
               </button>
+
               <button
-                onClick={handleSubmit}
+                onClick={isEditing ? handleUpdate : handleSubmit}
                 className="px-4 py-2 rounded bg-primary-500 text-white hover:bg-primary-600"
               >
-                Guardar
+                {isEditing ? 'Actualizar' : 'Guardar'}
               </button>
+
             </div>
           </div>
         </div>

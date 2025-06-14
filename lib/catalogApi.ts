@@ -45,4 +45,40 @@ export async function postCatalogEntry(entry: CatalogEntry): Promise<string> {
   return data.message // <-- Devolvemos el mensaje del backend
 }
 
+export async function updateCatalogEntry(id: string, label: string): Promise<string> {
+  const res = await fetch(`${API_URL}/api/catalogs/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ label }),
+  })
+
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.message || 'Error al actualizar el registro')
+  }
+
+  const data = await res.json()
+  return data.message || 'Registro actualizado correctamente'
+}
+
+
+export async function toggleCatalogActiveStatus(id: string, currentStatus: boolean): Promise<string> {
+  const newStatus = !currentStatus 
+
+  const res = await fetch(`${API_URL}/api/catalogs/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ active: newStatus }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.message || 'Error al actualizar el estado');
+  }
+
+  const data = await res.json();
+  return data.message || 'Estado actualizado correctamente';
+}
 
