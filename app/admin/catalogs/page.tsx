@@ -1,9 +1,12 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
-import { PlusCircle, Settings } from 'lucide-react'
-import { getCatalogByGroup, postCatalogEntry, updateCatalogEntry, toggleCatalogActiveStatus } from '@/lib/catalogApi'
+import { useEffect, useState } from 'react'
+import { PlusCircle } from 'lucide-react'
+import { getCatalogByGroup, postCatalogEntry, updateCatalogEntry, toggleCatalogActiveStatus, getconfigurableOptions } from '@/lib/catalogApi'
 import FloatingMessage from '@/components/FloatingMessage'
-import CatalogRow from '@/components/CatalogRow'
+import CatalogRow from '@/components/catalog/CatalogRow'
+import CatalogModal from '@/components/catalog/CatalogModal'
+import ConfigurableOptionRow from '@/components/catalog/ConfigurableOptionRow'
+import ConfigurableOptionModal from '@/components/catalog/ConfigurableOptionModal'
 
 type CatalogItem = {
   _id?: string
@@ -12,6 +15,13 @@ type CatalogItem = {
   active: boolean
 }
 
+export type ConfigurableOption = {
+  _id?: string
+  group: string
+  groupDescription: string
+  allowMultiple: boolean
+  enabled: boolean
+}
 const tabs = [
   { id: 'faceShape', label: 'Formas de Cara' },
   { id: 'frameShape', label: 'Formas de Armazón' },
@@ -23,6 +33,7 @@ const tabs = [
 export default function CatalogsPage() {
   const [activeTab, setActiveTab] = useState('faceShape')
   const [catalogs, setCatalogs] = useState<CatalogItem[]>([])
+  const [configurableOptions, setConfigurableOptions] = useState<ConfigurableOption[]>([])
   const [showModal, setShowModal] = useState(false)
   const [label, setLabel] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
@@ -30,13 +41,22 @@ export default function CatalogsPage() {
   const [openRow, setOpenRow] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [showConfigurableModal, setShowConfigurableModal] = useState(false)
 
 
   useEffect(() => {
-    getCatalogByGroup(activeTab)
-      .then(setCatalogs)
-      .catch((err) => setErrorMsg(err.message))
+    if (activeTab === 'configurableOptions') {
+      getconfigurableOptions()
+        .then(setConfigurableOptions)
+        .catch((err) => setErrorMsg(err.message))
+    } else {
+      getCatalogByGroup(activeTab)
+        .then(setCatalogs)
+        .catch((err) => setErrorMsg(err.message))
+    }
   }, [activeTab])
+
+
 
   const handleSubmit = async () => {
     try {
@@ -72,12 +92,23 @@ export default function CatalogsPage() {
     }
   }
 
+  const handleToggleActiveConfigurable = async (id: string, currentStatus: boolean) => {
+    try {
+
+    } catch (err: any) {
+      setErrorMsg(err.message)
+    }
+  }
 
   const handleEdit = (item: CatalogItem) => {
     setIsEditing(true)
     setEditingId(item._id!)
     setLabel(item.label)
     setShowModal(true)
+  }
+
+  const handleEditConfigurable = (item: ConfigurableOption) => {
+
   }
 
   const handleUpdate = async () => {
@@ -133,13 +164,20 @@ export default function CatalogsPage() {
 
         <div className="mt-2 sm:mt-0">
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              if (activeTab === 'configurableOptions') {
+                setShowConfigurableModal(true)
+              } else {
+                setShowModal(true)
+              }
+            }}
             className="flex items-center gap-2 bg-primary-400 hover:bg-primary-500 text-white px-6 py-2 rounded-md text-sm transition-colors"
           >
             <PlusCircle className="h-5 w-5" />
             Agregar
           </button>
         </div>
+
       </div>
 
       <div className="bg-white dark:bg-primary-900 p-4 rounded shadow border border-primary-100 dark:border-primary-700">
@@ -149,65 +187,79 @@ export default function CatalogsPage() {
           <table className="w-full text-sm text-left">
             <thead className="bg-primary-100 dark:bg-primary-800 text-primary-800 dark:text-primary-100">
               <tr>
-                <th className="px-4 py-3">Etiqueta</th>
-                <th className="px-4 py-3">Activo</th>
-                <th className="px-4 py-3 w-12">Acciones</th>
+                {activeTab === 'configurableOptions' ? (
+                  <>
+                    <th className="px-4 py-3">Grupo</th>
+                    <th className="px-4 py-3">Descripción</th>
+                    <th className="px-4 py-3">Permite múltiples</th>
+                    <th className="px-4 py-3">Activo</th>
+                    <th className="px-4 py-3 w-12">Acciones</th>
+
+                  </>
+                ) : (
+                  <>
+                    <th className="px-4 py-3">Etiqueta</th>
+                    <th className="px-4 py-3">Activo</th>
+                    <th className="px-4 py-3 w-12">Acciones</th>
+                  </>
+                )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-primary-100 dark:divide-primary-800">
-              {catalogs.map((item) => (
-                <CatalogRow
-                  key={item._id}
-                  item={item}
-                  openRow={openRow}
-                  setOpenRow={setOpenRow}
-                  onEdit={handleEdit}
-                  onToggleActive={handleToggleActive}
-                />
-              ))}
 
+            <tbody className="divide-y divide-primary-100 dark:divide-primary-800">
+              {activeTab === 'configurableOptions'
+                ? configurableOptions.map((item) => (
+                  <ConfigurableOptionRow
+                    key={item._id}
+                    item={item}
+                    openRow={openRow}
+                    setOpenRow={setOpenRow}
+                    onEdit={handleEditConfigurable}
+                    onToggleActive={handleToggleActiveConfigurable}
+                  />
+                ))
+                : catalogs.map((item) => (
+                  <CatalogRow
+                    key={item._id}
+                    item={item}
+                    openRow={openRow}
+                    setOpenRow={setOpenRow}
+                    onEdit={handleEdit}
+                    onToggleActive={handleToggleActive}
+                  />
+                ))}
             </tbody>
+
+
           </table>
         )}
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-primary-900 p-6 rounded shadow-lg w-full max-w-sm">
-            <h2 className="text-lg font-semibold mb-4 text-primary-900 dark:text-primary-100">
-              Nuevo registro: {tabs.find(t => t.id === activeTab)?.label}
-            </h2>
-            <input
-              type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Ej. Ovalada"
-              className="w-full px-4 py-2 mb-4 rounded border border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-800 text-primary-900 dark:text-primary-100"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowModal(false)
-                  setLabel('') // ← limpia el input
-                  setIsEditing(false)
-                  setEditingId(null)
-                }}
-                className="px-4 py-2 rounded bg-gray-200 dark:bg-primary-700 text-primary-900 dark:text-white"
-              >
-                Cancelar
-              </button>
+      <CatalogModal
+        show={showModal}
+        label={label}
+        onChange={setLabel}
+        onClose={() => {
+          setShowModal(false)
+          setLabel('')
+          setIsEditing(false)
+          setEditingId(null)
+        }}
+        onSubmit={isEditing ? handleUpdate : handleSubmit}
+        isEditing={isEditing}
+        groupLabel={tabs.find(t => t.id === activeTab)?.label || ''}
+      />
+      <ConfigurableOptionModal
+        show={showConfigurableModal}
+        onClose={() => setShowConfigurableModal(false)}
+        onSubmit={(group, description, allowMultiple, enabled, options) => {
+          // Aquí puedes manejar el envío: guardar en la BD, actualizar estado, etc.
+          console.log({ group, description, allowMultiple, enabled, options })
+          setShowConfigurableModal(false)
+        }}
+      />
 
-              <button
-                onClick={isEditing ? handleUpdate : handleSubmit}
-                className="px-4 py-2 rounded bg-primary-500 text-white hover:bg-primary-600"
-              >
-                {isEditing ? 'Actualizar' : 'Guardar'}
-              </button>
 
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   )
 }
