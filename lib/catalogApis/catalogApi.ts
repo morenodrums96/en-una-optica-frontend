@@ -160,13 +160,14 @@ export async function getConfigurableOptionById(id: string) {
     throw new Error(data.message || 'Error al actualizar el registro')
   }
 
-  const data = await res.json()
-  return data 
+  const data = await res.json();
+  if (!data) throw new Error('No se encontró la opción configurable.');
+  return data;
 }
 
 export async function updateConfigurableOption(_id: string, data: any) {
 
-  const res = await fetch(`${API_URL}/api/configurable-options/change`, {
+  const res = await fetch(`${API_URL}/api/configurable-options/update`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

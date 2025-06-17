@@ -53,3 +53,28 @@ export async function registresProduct(data: any) {
 
   return dataa.message
 }
+
+export const uploadToS3 = async (file: File): Promise<string> => {
+  const res = await fetch(`${API_URL}/api/s3/sign-url?fileName=${encodeURIComponent(file.name)}&fileType=${file.type}`)
+  const { url, fileName } = await res.json()
+
+  const upload = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type,
+    },
+    body: file,
+  })
+
+  if (!upload.ok) {
+    throw new Error('Error al subir el archivo a S3')
+  }
+
+  // ✅ URL limpia para mostrar en <img src="...">
+  const baseUrl = url.split('?')[0]
+  return baseUrl
+}
+
+
+
+

@@ -4,6 +4,7 @@
 
 import { useState, useEffect, ChangeEvent } from 'react'
 import Image from 'next/image'
+import { uploadToS3 } from '@/lib/productsApis/productApis'
 
 export default function ProductFormModal({
   isOpen,
@@ -141,17 +142,25 @@ export default function ProductFormModal({
     if (file) setPreview(URL.createObjectURL(file))
   }
 
-  const handleVariantGallery = (index: number, files: FileList | null) => {
+  const handleVariantGallery = async (index: number, files: FileList | null) => {
     if (!files) return
-    const newPreviews = Array.from(files).map(file => URL.createObjectURL(file))
+
+    const urls: string[] = []
+
+    for (const file of Array.from(files)) {
+      const s3Url = await uploadToS3(file)
+      urls.push(s3Url)
+    }
+
     setFormData(prev => {
       const updated = [...prev.variants]
       const currentImages = new Set(updated[index].images)
-      newPreviews.forEach(img => currentImages.add(img))
+      urls.forEach(url => currentImages.add(url))
       updated[index].images = Array.from(currentImages)
       return { ...prev, variants: updated }
     })
   }
+
 
   const removeImageFromVariant = (variantIndex: number, imageIndex: number) => {
     setFormData(prev => {
@@ -245,10 +254,10 @@ export default function ProductFormModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-primary-900 p-6 rounded-lg w-full max-w-5xl shadow-lg dark:shadow-primary-800/30 overflow-y-auto max-h-[90vh]">
         <h2 className="text-2xl font-semibold text-primary-800 dark:text-white mb-6">
-          {defaultData ? 'Editar producto' : 'Registrar nuevo producto'}
+          {defaultData ? 'Edita el producto' : 'Registra un nuevo producto'}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="p-5 bg-white dark:bg-primary-900 rounded-xl border border-primary-200 dark:border-primary-700 shadow-md hover:shadow-lg transition-shadow duration-300 space-y-4">
+          <div className="grid grid-cols-2 gap-4 p-5 bg-white dark:bg-primary-900 rounded-xl border border-primary-200 dark:border-primary-700 shadow-md hover:shadow-lg transition-shadow duration-300">
             <input name="name" placeholder="Nombre" value={formData.name} onChange={handleInput} className={`w-full px-4 py-2 border rounded-lg transition ${errors.name ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 dark:border-primary-700 focus:ring-primary-400'}  placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-primary-800 text-gray-900 dark:text-white`} />
             <input name="category" placeholder="Categoría" value={formData.category} onChange={handleInput} className={`w-full px-4 py-2 border rounded-lg transition ${errors.category ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 dark:border-primary-700 focus:ring-primary-400'}  placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-primary-800 text-gray-900 dark:text-white`} />
             <input name="brand" placeholder="Marca" value={formData.brand} onChange={handleInput} className={`w-full px-4 py-2 border rounded-lg transition ${errors.brand ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 dark:border-primary-700 focus:ring-primary-400'}  placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-primary-800 text-gray-900 dark:text-white`} />
@@ -302,12 +311,21 @@ export default function ProductFormModal({
               <option value="">Forma de armazón</option>
               {catalogs.frameShape.map(c => <option key={c._id} value={c._id}>{c.label}</option>)}
             </select>
+            <textarea
+              name="description"
+              placeholder="Descripción"
+              value={formData.description}
+              onChange={handleInput}
+              className={`w-full px-4 py-2 border rounded-lg transition col-span-2
+              ${errors.description ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 dark:border-primary-700 focus:ring-primary-400'}
+              placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-primary-800 text-gray-900 dark:text-white`}
+            />
           </div>
-          <textarea name="description" placeholder="Descripción" value={formData.description} onChange={handleInput} className={`w-full px-4 py-2 border rounded-lg transition ${errors.description ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 dark:border-primary-700 focus:ring-primary-400'}  placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-primary-800 text-gray-900 dark:text-white`} />
+
 
           <div className="space-y-6">
             {formData.variants.map((v, i) => (
-              <div key={i} className="p-4 bg-primary-50 dark:bg-primary-800 border rounded space-y-4">
+              <div key={i} className="p-5 bg-white dark:bg-primary-900 rounded-xl border border-primary-200 dark:border-primary-700 shadow-md hover:shadow-lg transition-shadow duration-300 space-y-4">
                 <h4 className="font-semibold text-primary-800 dark:text-white">Variante {i + 1}</h4>
 
                 {/* Fila 1: Color y cantidad */}
@@ -315,22 +333,32 @@ export default function ProductFormModal({
                   <select
                     value={v.color}
                     onChange={e => handleVariantChange(i, 'color', e.target.value)}
-                    className="input"
+                    className={`w-full px-4 py-2 border rounded-lg transition ${errors[`variant_color_${i}`]
+                      ? 'border-red-500 focus:ring-red-400'
+                      : 'border-gray-300 dark:border-primary-700 focus:ring-primary-400'
+                      } placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-primary-800 text-gray-900 dark:text-white`}
                   >
-                    <option value="">Color</option>
+                    <option value="">Color del Armazón</option>
                     {catalogs.colors.map(c => (
                       <option key={c._id} value={c._id}>
                         {c.label}
                       </option>
                     ))}
                   </select>
+
                   <input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="Cantidad"
                     value={v.quantity}
                     onChange={e => handleVariantChange(i, 'quantity', e.target.value)}
-                    className="input"
+                    className={`w-full px-4 py-2 border rounded-lg transition 
+                    ${errors[`variant_quantity_${i}`] ? 'border-red-500 focus:ring-red-400' : 'border-gray-300 dark:border-primary-700 focus:ring-primary-400'} 
+                    placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-primary-800 text-gray-900 dark:text-white 
+                    appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                   />
+
                 </div>
 
                 {/* Fila 2: Imagen principal y galería */}
@@ -344,19 +372,20 @@ export default function ProductFormModal({
                       id={`mainImage-${i}`}
                       type="file"
                       accept="image/*"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0]
                         if (file) {
-                          const previewUrl = URL.createObjectURL(file)
+                          const s3Url = await uploadToS3(file)
                           setFormData(prev => {
                             const updated = [...prev.variants]
-                            updated[i].image = previewUrl
+                            updated[i].image = s3Url
                             return { ...prev, variants: updated }
                           })
                         }
                       }}
                       className="hidden"
                     />
+
                     {v.image && (
                       <div className="flex justify-center">
                         <img src={v.image} alt="Imagen principal" className="w-full max-w-[150px] h-auto object-cover rounded border shadow" />
@@ -378,6 +407,7 @@ export default function ProductFormModal({
                       onChange={(e) => handleVariantGallery(i, e.target.files)}
                       className="hidden"
                     />
+
 
                     {v.images.length > 0 && (
                       <div className="relative w-full max-w-[150px] h-[150px] mx-auto">
@@ -447,10 +477,17 @@ export default function ProductFormModal({
               </div>
             ))}
 
-            <button type="button" onClick={addVariant} className="text-blue-600 font-medium">➕ Agregar variante</button>
+            <button
+              type="button"
+              onClick={addVariant}
+              className="text-primary-500 dark:text-primary-300 font-medium hover:underline transition-colors"
+            >
+              ➕ Agregar variante
+            </button>
+
           </div>
 
-          <div className="mt-6">
+          <div className="p-5 bg-white dark:bg-primary-900 rounded-xl border border-primary-200 dark:border-primary-700 shadow-md hover:shadow-lg transition-shadow duration-300 space-y-4">
             <h3 className="text-sm font-medium mb-2 text-primary-800 dark:text-white">Opciones configurables</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {configurableOptions.map(opt => {

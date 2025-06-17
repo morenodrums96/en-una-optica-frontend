@@ -151,6 +151,13 @@ export default function ConfigurableOptionModal({ show, onClose, onSubmit, defau
     setOptions(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleRemoveColor = (optIndex: number, colorIndex: number) => {
+    const updated = [...options];
+    if (!updated[optIndex].availableColors) return;
+
+    updated[optIndex].availableColors = updated[optIndex].availableColors!.filter((_, i) => i !== colorIndex);
+    setOptions(updated);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -172,14 +179,14 @@ export default function ConfigurableOptionModal({ show, onClose, onSubmit, defau
         )}
         <input
           type="text"
-          value={group}
+          value={group || ''}
           onChange={(e) => setGroup(e.target.value)}
           placeholder="Nombre del grupo"
           className="w-full mb-4 px-4 py-2 rounded border border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-800"
         />
 
         <textarea
-          value={groupDescription}
+          value={groupDescription || ''}
           onChange={(e) => setGroupDescription(e.target.value)}
           placeholder="Descripción del grupo"
           rows={2}
@@ -308,6 +315,14 @@ export default function ConfigurableOptionModal({ show, onClose, onSubmit, defau
                       />
                       Activo
                     </label>
+                    {/* Botón eliminar */}
+                    <button
+                      onClick={() => handleRemoveColor(idx, colorIdx)}
+                      title="Eliminar color"
+                      className="text-danger-500 hover:text-danger-700 transition p-1"
+                    >
+                      ❌
+                    </button>
                   </div>
                 ))}
 
