@@ -43,6 +43,7 @@ export default function ProductFormModal({
     frond: boolean
     canModifyQuantity: boolean
     iva: boolean
+    size: string
   }>({
     name: '',
     category: '',
@@ -59,7 +60,8 @@ export default function ProductFormModal({
     configurableOptions: [],
     frond: false,
     canModifyQuantity: false,
-    iva: false
+    iva: false,
+    size: ''
   })
 
   type VariantType = {
@@ -97,6 +99,7 @@ export default function ProductFormModal({
         frond: false,
         canModifyQuantity: false,
         iva: false,
+        size: '',
       })
       setSelectedOptions([])
       setErrors({})
@@ -104,6 +107,27 @@ export default function ProductFormModal({
       setGalleryIndices([0]) // ✅ aquí va
     }
   }, [isOpen, defaultData])
+
+  useEffect(() => {
+    if (defaultData) {
+      setFormData({
+        ...defaultData,
+        unitCost: defaultData.unitCost.toString(),
+        customerPrice: defaultData.customerPrice.toString(),
+        variants: defaultData.variants.map((v: any) => ({
+          color: typeof v.color === 'object' ? v.color._id : v.color,
+          quantity: v.quantity.toString(),
+          image: v.image,
+          images: v.images || []
+        })),
+        configurableOptions: defaultData.configurableOptions?.map((opt: any) => typeof opt === 'object' ? opt._id : opt) || []
+      })
+      setSelectedOptions(
+        defaultData.configurableOptions?.map((opt: any) => typeof opt === 'object' ? opt._id : opt) || []
+      )
+      setGalleryIndices(defaultData.variants?.map(() => 0) || [0])
+    }
+  }, [defaultData])
 
 
 
@@ -311,6 +335,20 @@ export default function ProductFormModal({
               <option value="">Forma de armazón</option>
               {catalogs.frameShape.map(c => <option key={c._id} value={c._id}>{c.label}</option>)}
             </select>
+            <select
+              name="size"
+              value={formData.size}
+              onChange={handleInput}
+              className={`w-full px-4 py-2 border rounded-lg transition 
+              border-gray-300 dark:border-primary-700 focus:ring-primary-400
+              bg-white dark:bg-primary-800 text-gray-900 dark:text-white`}
+            >
+              <option value="">Selecciona tamaño</option>
+              <option value="Angosto">Angosto</option>
+              <option value="Promedio">Promedio</option>
+              <option value="Ancho">Ancho</option>
+              <option value="Extra ancho">Extra ancho</option>
+            </select>
             <textarea
               name="description"
               placeholder="Descripción"
@@ -509,12 +547,74 @@ export default function ProductFormModal({
               })}
             </div>
           </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Frontal */}
+            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-primary-700 rounded shadow border">
+              <span className="text-sm text-gray-700 dark:text-white">Visible para el cliente</span>
+              <button
+                type="button"
+                onClick={() => handleToggle('frond')}
+                className={`w-10 h-6 flex items-center bg-gray-300 rounded-full p-1 transition-colors duration-300 ${formData.frond ? 'bg-primary-600' : ''
+                  }`}
+              >
+                <span
+                  className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${formData.frond ? 'translate-x-4' : ''
+                    }`}
+                ></span>
+              </button>
+            </div>
+
+            {/* Modificar cantidad */}
+            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-primary-700 rounded shadow border">
+              <span className="text-sm text-gray-700 dark:text-white">Cantidad modificable</span>
+              <button
+                type="button"
+                onClick={() => handleToggle('canModifyQuantity')}
+                className={`w-10 h-6 flex items-center bg-gray-300 rounded-full p-1 transition-colors duration-300 ${formData.canModifyQuantity ? 'bg-primary-600' : ''
+                  }`}
+              >
+                <span
+                  className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${formData.canModifyQuantity ? 'translate-x-4' : ''
+                    }`}
+                ></span>
+              </button>
+            </div>
+
+            {/* IVA */}
+            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-primary-700 rounded shadow border">
+              <span className="text-sm text-gray-700 dark:text-white">Aplicar IVA</span>
+              <button
+                type="button"
+                onClick={() => handleToggle('iva')}
+                className={`w-10 h-6 flex items-center bg-gray-300 rounded-full p-1 transition-colors duration-300 ${formData.iva ? 'bg-primary-600' : ''
+                  }`}
+              >
+                <span
+                  className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${formData.iva ? 'translate-x-4' : ''
+                    }`}
+                ></span>
+              </button>
+            </div>
+          </div>
 
 
           <div className="flex justify-end gap-2 mt-6">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 dark:bg-primary-800 rounded">Cancelar</button>
-            <button type="submit" className="px-4 py-2 bg-primary-500 text-white rounded">Guardar</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-200 dark:bg-primary-800 rounded"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              className="px-4 py-2 bg-primary-500 text-white rounded"
+            >
+              {defaultData ? 'Actualizar' : 'Guardar'}
+            </button>
           </div>
+
         </form>
       </div>
     </div>
