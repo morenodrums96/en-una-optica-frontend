@@ -6,7 +6,7 @@ import { getCatalogByGroup, searchConfigurableActive, registresProduct, getAllPr
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react'
 import FloatingMessage from '@/components/FloatingMessage/FloatingMessage'
 import ConfirmMessage from '@/components/FloatingMessage/ConfirmMessage'
-
+import Image from 'next/image'
 export default function ProductosPage() {
   const [showModal, setShowModal] = useState(false)
   const [catalogs, setCatalogs] = useState({ frameMaterial: [], faceShape: [], frameShape: [], colors: [] })
@@ -123,18 +123,24 @@ export default function ProductosPage() {
         onSubmit={handleSaveProduct}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {products.map((product: any) => (
           <div
             key={product._id}
             className="bg-white dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col"
           >
-            <img
-              src={product.variants?.[0]?.image || '/images/placeholder-product.png'}
-              onError={(e) => (e.currentTarget.src = '/images/placeholder-product.png')}
-              alt={product.name}
-              className="w-full h-40 object-cover object-center rounded-md mb-4 aspect-video"
-            />
+            <div className="relative w-full aspect-video">
+              <Image
+                src={product.variants?.[0]?.image || '/images/placeholder.png'}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                className="object-cover rounded-md"
+                priority
+              />
+            </div>
+
+
 
             <div className="flex-1 space-y-1">
               <h3 className="text-lg font-semibold text-primary-900 dark:text-white">{product.name}</h3>

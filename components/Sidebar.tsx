@@ -11,7 +11,8 @@ import {
   LogOut,
   Sun,
   Moon,
-  Folders   
+  Folders,
+  Image 
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/admin/employee', icon: <UsersRound className="h-5 w-5" />, label: 'Empleados' },
   { href: '/admin/financial', icon: <LineChart className="h-5 w-5" />, label: 'Finanzas' },
   { href: '/admin/catalogs', icon: <Folders   className="h-5 w-5" />, label: 'Catálogos' },
+  { href: '/admin/gallery', icon: <Image className="h-5 w-5" />, label: 'Marketing Media' },
 
 ]
 
