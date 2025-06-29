@@ -26,14 +26,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeWrapper>
           <HeaderPublic />
-          {children}
-           <Footer />
+          {/* Contenedor principal para el contenido, con padding superior */}
+          <main className="relative pt-[100px]"> {/* <--- CAMBIO AQUÍ */}
+            {children}
+          </main>
+          <Footer />
         </ThemeWrapper>
       </body>
     </html>
