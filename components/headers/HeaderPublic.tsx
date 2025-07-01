@@ -19,32 +19,30 @@ export default function HeaderPublic({ animated = true }: Props) {
     if (!animated || !headerRef.current) return
 
     const handleScroll = () => {
-      const shouldScroll = window.scrollY > 50
-      // Solo actualiza el estado si ha cambiado para evitar re-renders innecesarios
-      if (shouldScroll !== isScrolled) {
-        setIsScrolled(shouldScroll)
-      }
+      const scrolled = window.scrollY > 50
+      setIsScrolled(scrolled)
     }
 
-    handleScroll() // Llama al inicio para establecer el estado inicial
+    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [animated, isScrolled]) // Añadir isScrolled a las dependencias para evitar warnings, aunque la lógica evita bucles.
+  }, [animated])
+
 
   return (
     <header
       ref={headerRef}
       id="header-public"
       className={`
-    fixed top-6 left-1/2 transform -translate-x-1/2 z-50
-    transition-all duration-300 ease-in-out
+    fixed top-8 left-1/2 transform -translate-x-1/2 z-50
+    transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)]
     py-4 w-full flex items-center justify-center
     ${isScrolled
           ? 'bg-white shadow-md rounded-full px-10 max-w-6xl'
           : 'bg-transparent px-6 max-w-[100vw]'}
   `}
     >
-  <div className="flex items-center justify-between w-full max-w-8xl-mid mx-auto animate-slide-down">
+      <div className="flex items-center justify-between w-full max-w-8xl-mid mx-auto animate-slide-down">
         {/* Logo */}
         <Link href="/">
           <span className="font-[Inkcorrode] text-4xl tracking-wide text-primary-900">
