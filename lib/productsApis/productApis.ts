@@ -143,3 +143,19 @@ export async function deleteProduct(_id: string) {
   const dataa = await res.json();
   return dataa.message || 'Producto eliminado correctamente';
 }
+
+export async function bestSellers() {
+  try {
+    const res = await fetch(`${API_URL}/api/products/byFilter?page=1&limit=8&sort=alphabetical`, {
+      method: 'GET',
+    })
+
+    if (!res.ok) throw new Error('Error al cargar los datos')
+
+    const data = await res.json()
+    return data;
+  } catch (error: any) {
+    console.error('Error al obtener catálogo:', error)
+    throw new Error(error.message || 'No se pudo obtener el catálogo')
+  }
+}

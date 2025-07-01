@@ -17,3 +17,80 @@
 .animate-fade-in {
   animation: fade-in 0.9s ease-out;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(*) {
+  animation-duration: 0.5;
+}
+
+::view-transition-old(root) {
+  animation: slider-out-to-left 0.5s forwards;
+}
+
+::view-transition-new(root) {
+  animation: slider-out-to-right 0.5s forwards;
+}
+
+@keyframes slide-out-to-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+
+}
+
+@keyframes slide-out-to-right {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+
+}
+
+
+@font-face {
+  font-family: 'Inkcorrode';
+  src: url('/fonts/Inkcorrode.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.header-scrolled {
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  padding: 0.8rem 1.5rem; /* py-2 px-6 */
+  width: 65%;
+}
+
+.header-default {
+  background-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0.8rem 1rem; /* py-2 px-4 */
+  width: 100%;
+  max-width: none;
+}
+
+/* En tu archivo CSS global o en un <style jsx> si lo usas */
+#header-public {
+  will-change: background-color, box-shadow, border-radius, padding, width, transform;
+}

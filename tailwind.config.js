@@ -11,6 +11,11 @@ module.exports = {
       transitionProperty: {
         colors: 'background-color, border-color, color, fill, stroke',
       },
+
+      maxWidth: {
+        '8xl-mid': '90.5rem', // 1448px
+      },
+
       colors: {
         primary: {
           50: '#F0FBFA',
@@ -38,16 +43,28 @@ module.exports = {
           700: '#B42318',
         },
       },
+
       keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
         'slide-up': {
           from: { transform: 'translateY(100%)', opacity: '0' },
           to: { transform: 'translateY(0)', opacity: '1' },
         },
+        'slide-down': {
+          from: { transform: 'translateY(-100%)', opacity: '0' },
+          to: { transform: 'translateY(0)', opacity: '1' },
+        },
       },
       animation: {
+        marquee: 'marquee 20s linear infinite',
         'slide-up': 'slide-up 0.3s ease-out',
+        'slide-down': 'slide-down 0.6s ease-out',
       },
     },
   },
+
   plugins: [],
 }
