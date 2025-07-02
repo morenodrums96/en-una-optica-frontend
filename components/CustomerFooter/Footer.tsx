@@ -11,14 +11,15 @@ export default function Footer() {
 
         {/* Logo + descripción */}
         <div>
-          <Link href="/" className="inline-block mb-4">
-            <Image
-              src="/imagen/name_blue.png"
-              alt="EnUnaÓptica Logo"
-              width={160}
-              height={50}
-              className="object-contain"
-            />
+          <Link href="/">
+            <span className="font-[Inkcorrode] text-4xl tracking-wide text-primary-900">
+              <span className="text-primary-500">E</span>
+              <span className="text-primary-900">n</span>
+              <span className="text-primary-500">U</span>
+              <span className="text-primary-900">na</span>
+              <span className="text-primary-500">Ó</span>
+              <span className="text-primary-900">ptica</span>
+            </span>
           </Link>
           <p className="text-sm text-primary-800 leading-relaxed">
             Lentes hechos para ti. Comodidad, tecnología y estilo en un solo lugar.
