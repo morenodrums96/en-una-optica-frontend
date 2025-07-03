@@ -19,7 +19,7 @@ export default function HomePage() {
       <VideoSection />
       {/* CONTENIDO PRINCIPAL */}
       <Suspense fallback={<div>Cargando contenido...</div>}>
-        <section id="best-sellers-section" className="bg-white py-1">
+        <section id="best-sellers-section">
           <BestSellersCarousel />
         </section>
 

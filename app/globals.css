@@ -108,3 +108,80 @@ body {
 #header-public {
   will-change: background-color, box-shadow, border-radius, padding, width, transform;
 }
+/*---------------------------------------------------------------------------------------------------------------*/
+.card-hover-animated::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -100%;
+  width: 200%;
+  height: 160%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.26) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255,  0.26) 100%
+  );
+  transform: rotate(-15deg);
+  transition: transform 0.6s var(--animation-ease), translate 0.6s var(--animation-ease);
+  z-index: 5;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.card-hover-animated:hover::before {
+  translate: 200%;
+}
+
+
+:root {
+  --card-radius: 1rem;
+  --border-color: #286D76;
+  --border-width: 3px;
+  --animation-duration: 0.6s;
+  --animation-ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Contenedor principal */
+.card-hover-animated {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--card-radius);
+}
+
+/* Línea de borde animada */
+.card-hover-animated::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: inherit;
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  animation: borderReset var(--animation-duration) var(--animation-ease) 1;
+}
+
+/* Al hacer hover */
+.card-hover-animated:hover::after {
+  animation: borderReveal var(--animation-duration) var(--animation-ease) forwards;
+}
+
+/* Keyframes para la animación de entrada */
+@keyframes borderReveal {
+  0% {
+    clip-path: polygon(0 120%, 0 120%, 0 120%, 0 120%);
+  }
+  100% {
+    clip-path: polygon(0 -120%, 120% 0, 200% 120%, 0 120%);
+  }
+}
+
+/* Keyframes para reset visual */
+@keyframes borderReset {
+  0% {
+    clip-path: polygon(-120% 0, 120% 0, 120% 200%, 0 120%);
+  }
+  100% {
+    clip-path: polygon(120% 0, 120% 0, 120% 0, 120% 0);
+  }
+}
