@@ -159,3 +159,37 @@ export async function bestSellers() {
     throw new Error(error.message || 'No se pudo obtener el catálogo')
   }
 }
+
+export async function productsByFiler(page = 1, limit = 10) {
+  try {
+    const res = await fetch(`${API_URL}/api/products/byFilter?page=${page}&limit=${limit}`, {
+      method: 'GET',
+    })
+
+    if (!res.ok) throw new Error('Error al cargar los datos')
+
+    const data = await res.json()
+    return data
+  } catch (error: any) {
+    console.error('Error al obtener catálogo:', error)
+    throw new Error(error.message || 'No se pudo obtener el catálogo')
+  }
+}
+
+export async function getProductsByIds(ids: string[]) {
+  try {
+    const res = await fetch(`${API_URL}/api/products/byIds`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+
+    if (!res.ok) throw new Error('Error al cargar productos por ID')
+
+    const data = await res.json()
+    return data
+  } catch (error: any) {
+    console.error('Error:', error)
+    throw new Error(error.message || 'No se pudieron obtener los productos')
+  }
+}

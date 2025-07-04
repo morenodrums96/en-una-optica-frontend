@@ -2,12 +2,20 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { getProductSelected } from '@/lib/productsApis/productApis'
+import { useWishlist } from '@/hooks/useWishlist'
+import logoLends from '@/components/icons/logoLends.svg'
+import logoLendsBlue from '@/components/icons/logoLendsBlue.svg'
+import Image from 'next/image'
+import { useCart } from '@/context/CartContext'
+
 
 export default function ShopPage() {
     const [product, setProduct] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [selectedOptions, setSelectedOptions] = useState<Record<string, any>>({})
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
+    const { toggleWishlist, isInWishlist } = useWishlist()
+    const { addToCart } = useCart()
 
     // Define useCallback hooks at the top level, unconditionally
     const goToPreviousImage = useCallback(() => {
@@ -111,7 +119,23 @@ export default function ShopPage() {
 
     return (
         <div className="max-w-7xl mx-auto p-6 bg-white shadow-lg rounded-lg my-8">
-            <h1 className="text-4xl font-extrabold text-gray-800 mb-8 text-center">{product.name}</h1>
+            <div className="flex items-center justify-center gap-4 mb-8">
+                <h1 className="text-4xl font-extrabold text-gray-800 text-center">{product.name}</h1>
+
+                <button
+                    onClick={() => toggleWishlist(product._id)}
+                    className="p-2 rounded-full bg-white shadow hover:scale-105 transition-transform"
+                    aria-label="Agregar a favoritos"
+                >
+                    <Image
+                        src={isInWishlist(product._id) ? logoLendsBlue : logoLends}
+                        alt="Me gusta"
+                        width={30}
+                        height={30}
+                        className="w-7 h-7 object-contain"
+                    />
+                </button>
+            </div>
 
             {/* Main content area: Image on left, Options on right */}
             <div className="flex flex-col md:flex-row gap-8 lg:gap-16"> {/* Added flex container */}
@@ -289,10 +313,26 @@ export default function ShopPage() {
                     <div className="mt-10 text-center md:text-left">
                         <button
                             className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg transform transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-300"
-                            onClick={() => alert('¡Producto añadido al carrito!')}
+                            onClick={() => {
+                                const totalPrice = Object.values(selectedOptions)
+                                    .flat()
+                                    .reduce((acc, opt: any) => acc + opt.price * (opt.quantity || 1), 0)
+
+                                addToCart({
+                                    _id: product._id,
+                                    name: product.name,
+                                    customerPrice: product.customerPrice,
+                                    variantImage: product.variants?.[0]?.images?.[0] || '/images/placeholder.png',
+                                    selectedOptions,
+                                })
+
+
+                                alert('¡Producto añadido al carrito!')
+                            }}
                         >
                             Añadir al Carrito
                         </button>
+
                     </div>
 
                     {/* Details / Guarantees Section (as seen in Sam example) */}

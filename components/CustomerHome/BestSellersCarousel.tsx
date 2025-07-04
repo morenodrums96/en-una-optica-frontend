@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import logoLends from '@/components/icons/logoLends.svg'
+import logoLendsBlue from '@/components/icons/logoLendsBlue.svg'
+
+import { useWishlist } from '@/hooks/useWishlist'
 
 interface Product {
   _id: string
@@ -27,6 +30,7 @@ export default function BestSellersCarousel() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(2) // el del centro al inicio
+  const { toggleWishlist, isInWishlist } = useWishlist()
 
   const handleProductClick = (productId: string) => {
     localStorage.setItem('selectedProductId', productId)
@@ -144,12 +148,13 @@ export default function BestSellersCarousel() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    console.log('Me gusta producto:', product._id)
+                                    toggleWishlist(product._id)
                                   }}
+
                                   className="p-1 rounded-full bg-white shadow-md transition-transform hover:scale-90"
                                 >
                                   <Image
-                                    src={logoLends}
+                                    src={isInWishlist(product._id) ? logoLendsBlue : logoLends}
                                     alt="Me gusta"
                                     width={30}
                                     height={30}
@@ -189,7 +194,7 @@ export default function BestSellersCarousel() {
                                 Precio: <span className="font-semibold">${product.customerPrice.toLocaleString('es-MX')}</span>
                               </p>
                             </div>
-                            
+
                           </motion.div>
 
                         )

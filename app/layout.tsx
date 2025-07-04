@@ -7,16 +7,10 @@ import ThemeWrapper from '@/components/ThemeWrapper'
 import HeaderPublic from '@/components/headers/HeaderPublic'
 import Footer from '@/components/CustomerFooter/Footer'
 import TopMarquee from '@/components/TopMarquee'
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-})
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-})
+import AuthSlider from '@/components/AuthSlider' // 👈 Importa el slider
+import { WishlistProvider } from '@/context/WishlistContext'
+import { CartProvider } from '@/context/CartContext'
+import { AuthSliderProvider } from '@/context/AuthSliderContext'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -26,15 +20,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning>
       <body>
-        <ThemeWrapper>
-          {!isAuthPage && <TopMarquee/>}
-
-          {!isAuthPage && <HeaderPublic />}
-          <main className={`${!isAuthPage ? 'pt-[100px]' : ''}`}>
-            {children}
-          </main>
-          {!isAuthPage && <Footer />}
-        </ThemeWrapper>
+        <AuthSliderProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <ThemeWrapper>
+                {!isAuthPage && <TopMarquee />}
+                {!isAuthPage && <HeaderPublic />}
+                <main className={`${!isAuthPage ? 'pt-[100px]' : ''}`}>
+                  {children}
+                </main>
+                {!isAuthPage && <Footer />}
+                <AuthSlider /> {/* 👈 Aquí se monta el slider */}
+              </ThemeWrapper>
+            </CartProvider>
+          </WishlistProvider>
+        </AuthSliderProvider>
       </body>
     </html>
   )

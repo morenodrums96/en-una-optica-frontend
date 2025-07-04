@@ -6,6 +6,9 @@ import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline'
 import { Truck } from 'lucide-react'
 import Image from 'next/image'
 import logoLends from '@/components/icons/logoLends.svg'
+import { useWishlist } from '@/hooks/useWishlist'
+import { useCart } from '@/context/CartContext'
+import { useAuthSlider } from '@/context/AuthSliderContext'
 
 interface Props {
   animated?: boolean
@@ -16,6 +19,9 @@ interface Props {
 export default function HeaderPublic({ animated = true }: Props) {
   const headerRef = useRef<HTMLElement>(null)
   const [isScrolled, setIsScrolled] = useState(false)
+  const { wishlist } = useWishlist()
+  const { cartItems } = useCart()
+  const { openSlider } = useAuthSlider()
 
   useEffect(() => {
     if (!animated || !headerRef.current) return
@@ -36,7 +42,7 @@ export default function HeaderPublic({ animated = true }: Props) {
       ref={headerRef}
       id="header-public"
       className={`
-    fixed top-8 left-1/2 transform -translate-x-1/2 z-[9999]
+    fixed top-8 left-1/2 transform -translate-x-1/2 z-[1000]
     transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)]
     py-4 w-full flex items-center justify-center
     ${isScrolled
@@ -59,34 +65,53 @@ export default function HeaderPublic({ animated = true }: Props) {
 
         {/* Menú */}
         <nav className="hidden md:flex space-x-8 text-[#254C54] text-lg font-medium">
-          <Link href="#productos">Productos</Link>
+          <Link href="/products">Productos</Link>
           <Link href="#nosotros">Nosotros</Link>
           <Link href="#contacto">Contacto</Link>
         </nav>
 
         {/* Íconos */}
         <div className="flex items-center space-x-4 text-primary-800">
-          <Link href="/favoritos" className="hover:text-primary-600">
+          <Link href="/wishlist" className="relative group">
             <Image
               src={logoLends}
               alt="Me gusta"
-              style={{ width: '50px', height: '50px' }}
               width={50}
               height={50}
-              className="w-6 h-6 object-contain transition-transform hover:scale-110"
+              className="w-11 h-11 object-contain transition-transform group-hover:scale-110"
             />
-            
+
+            {wishlist.length > 0 && (
+              <span
+                className="absolute bg-primary-400 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold shadow"
+                style={{ top: '0px', left: '33px' }}
+              >
+                {wishlist.length}
+              </span>
+
+            )}
           </Link>
-          <Link href="/carrito" className="hover:text-primary-600 relative">
+          <Link href="/car" className="hover:text-primary-600 relative">
             <ShoppingCartIcon className="w-7 h-7 object-contain transition-transform hover:scale-110" />
-            <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full px-1">3</span>
+
+            {cartItems.length > 0 && (
+              <span
+                className="absolute -top-2 -right-2 bg-primary-400 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold shadow"
+              >
+                {cartItems.length}
+              </span>
+            )}
           </Link>
-          <Link href="/seguimiento" className="hover:text-primary-600">
+
+
+          <Link href="/tracker" className="hover:text-primary-600">
             <Truck className="h-7 w-7 object-contain transition-transform hover:scale-110" />
           </Link>
-          <Link href="/login" className="hover:text-primary-600">
+          <button onClick={openSlider} className="hover:text-primary-600">
             <UserIcon className="h-7 w-7 object-contain transition-transform hover:scale-110" />
-          </Link>
+          </button>
+
+
         </div>
       </div>
     </header>
