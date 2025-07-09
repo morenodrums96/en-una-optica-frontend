@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Sun, Moon, ChevronRight, Menu } from 'lucide-react'
-import { useSidebar } from '@/context/SidebarContext' // este es el contexto global
+import { useSidebar } from '@/context/SidebarContext'
 
 const breadcrumbLabels: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -17,8 +17,7 @@ const breadcrumbLabels: Record<string, string> = {
 
 export default function AdminHeader() {
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
-  const { setIsOpen } = useSidebar() // accedemos al estado del sidebar
+  const { setIsOpen } = useSidebar()
 
   const pathSegments = pathname
     .split('/')

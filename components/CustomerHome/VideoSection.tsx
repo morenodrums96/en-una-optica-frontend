@@ -99,119 +99,49 @@ export default function VideoSection() {
 
 
   return (
-    <section
-      id="video-scroll-wrapper"
-      style={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transform: 'translateY(-10vh)', // 💡 este lo puedes ajustar
-        paddingTop: 'clamp(0px, 2vh, 40px)',
-        padding: '0 5vw',
-        gap: '6vw'
-      }}
+  <section
+    id="video-scroll-wrapper"
+    className="flex flex-col lg:flex-row items-center justify-center gap-12 px-[5vw] pt-[clamp(0px,2vh,40px)] h-[100vh] relative -translate-y-[10vh]"
+  >
+    {/* Columna izquierda: Lentes */}
+    <div
+      className="hero-glasses flex justify-center items-start opacity-0 invisible w-full lg:w-1/2"
     >
-
-      {/* Columna izquierda: Lentes */}
-      <div
-        className="hero-glasses"
-        style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          opacity: 0,
-          visibility: 'hidden',
-        }}
-      >
-        <div style={{ position: 'relative', marginTop: '-40px' }}>
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'radial-gradient(circle at center, #ffffff00 40%, rgba(240,238,237,1) 100%)',
-              pointerEvents: 'none',
-              zIndex: 0,
-            }}
-          />
-          <img
-            ref={imgRef}
-            src="imagen/frames/001.webp"
-            loading="eager"
-            alt="Lentes animados"
-            style={{
-              width: 'clamp(350px, 40vw, 800px)',
-              height: 'auto',
-              position: 'relative',
-              zIndex: 1,
-              willChange: 'transform',
-              WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
-              WebkitMaskRepeat: 'no-repeat',
-              WebkitMaskSize: '100% 100%',
-              maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
-              maskRepeat: 'no-repeat',
-              maskSize: '100% 100%'
-            }}
-          />
-        </div>
+      <div className="relative mt-[-40px]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#ffffff00_40%,_rgba(240,238,237,1)_100%)] pointer-events-none z-0" />
+        <img
+          ref={imgRef}
+          src="imagen/frames/001.webp"
+          loading="eager"
+          alt="Lentes animados"
+          className="relative z-10 will-change-transform w-[clamp(280px,40vw,800px)] h-auto 
+                     mask-[radial-gradient(ellipse_at_center,_rgba(0,0,0,1)_60%,_rgba(0,0,0,0)_100%)]"
+        />
       </div>
+    </div>
 
-      {/* Columna derecha: Texto hero */}
-      <div
-        className="hero-text"
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center'
-        }}
+    {/* Columna derecha: Texto hero */}
+    <div className="hero-text w-full lg:w-1/2 flex flex-col justify-center text-center lg:text-left">
+      <h1
+        className="hero-title text-[clamp(2rem,5vw,4.5rem)] font-bold leading-tight text-[#286D76] opacity-0 mb-4"
       >
-        <h1
-          className="hero-title"
-          style={{
-            fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-            fontWeight: '700',
-            color: '#286D76', // primary.700
-            lineHeight: 1.2,
-            marginBottom: '1rem',
-            opacity: 0
-          }}
-        >
-          Ver bien es solo el inicio,<br />
-          <span style={{ color: '#31AFB4' }}>verte increíble</span> es nuestro compromiso.
-        </h1>
-      </div>
+        Ver bien es solo el inicio,<br />
+        <span className="text-[#31AFB4]">verte increíble</span> es nuestro compromiso.
+      </h1>
+    </div>
 
-      <div
-        className="hero-text-phase-2"
-        style={{
-          position: 'absolute',
-          left: '5%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          maxWidth: '40%',
-          opacity: 0,
-        }}
+    {/* Segunda fase de texto */}
+    <div
+      className="hero-text-phase-2 absolute left-[5%] top-1/2 -translate-y-1/2 w-[90%] lg:max-w-[40%] opacity-0"
+    >
+      <h1
+        className="text-[clamp(2rem,5vw,4.5rem)] font-bold leading-tight text-[#286D76] mb-4"
       >
-        <h1
-          style={{
-            fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-            fontWeight: '700',
-            color: '#286D76',
-            lineHeight: 1.2,
-            marginBottom: '1rem',
-          }}
-        >
-          Con lentes que reflejan tu estilo y tu visión.<br />
-          <span style={{ color: '#31AFB4' }}>Y mostrar al mundo tu auténtica versión.</span>
-        </h1>
-      </div>
+        Con lentes que reflejan tu estilo y tu visión.<br />
+        <span className="text-[#31AFB4]">Y mostrar al mundo tu auténtica versión.</span>
+      </h1>
+    </div>
+  </section>
+)
 
-
-    </section>
-  )
 }

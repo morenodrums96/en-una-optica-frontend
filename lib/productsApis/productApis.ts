@@ -55,24 +55,19 @@ export async function registresProduct(data: any) {
 }
 
 export const uploadToS3 = async (file: File): Promise<string> => {
-  const res = await fetch(`${API_URL}/api/s3/sign-url?fileName=${encodeURIComponent(file.name)}&fileType=${file.type}`)
-  const { url, fileName } = await res.json()
+  const formData = new FormData()
+  formData.append('file', file)
 
-  const upload = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': file.type,
-    },
-    body: file,
+  const res = await fetch(`${API_URL}/api/upload-image`, {
+    method: 'POST',
+    body: formData,
   })
 
-  if (!upload.ok) {
-    throw new Error('Error al subir el archivo a S3')
-  }
+  const data = await res.json()
 
-  // ✅ URL limpia para mostrar en <img src="...">
-  const baseUrl = url.split('?')[0]
-  return baseUrl
+  if (!res.ok) throw new Error(data.error || 'Error al subir imagen')
+
+  return data.url // ✅ Devuelve la URL limpia del bucket optimizado
 }
 
 
@@ -191,5 +186,17 @@ export async function getProductsByIds(ids: string[]) {
   } catch (error: any) {
     console.error('Error:', error)
     throw new Error(error.message || 'No se pudieron obtener los productos')
+  }
+}
+
+export const cleanupTempImages = async (urls: string[]) => {
+  for (const url of urls) {
+    try {
+      await fetch(`/api/delete-image?url=${encodeURIComponent(url)}`, {
+        method: 'DELETE',
+      })
+    } catch (err) {
+      console.error('Error al eliminar imagen temporal:', err)
+    }
   }
 }

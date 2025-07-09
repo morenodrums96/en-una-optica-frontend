@@ -114,8 +114,11 @@ export default function ShopPage() {
     if (loading) return <div className="flex justify-center items-center h-screen text-lg text-gray-700">Cargando producto...</div>
     if (!product) return <div className="flex justify-center items-center h-screen text-lg text-red-500">Producto no encontrado o error al cargar.</div>
 
-    const images = product.variants?.[0]?.images || [];
-    const hasMultipleImages = images.length > 1;
+    const images = product.variants?.[0]?.images?.length
+        ? product.variants[0].images
+        : product.variants?.[0]?.image
+            ? [product.variants[0].image]
+            : ['/images/placeholder-product.png']; const hasMultipleImages = images.length > 1;
 
     return (
         <div className="max-w-7xl mx-auto p-6 bg-white shadow-lg rounded-lg my-8">

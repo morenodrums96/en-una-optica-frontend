@@ -30,14 +30,17 @@ export default function CartPage() {
                 />
                 <div className="flex-1 space-y-2">
                   <h2 className="text-xl font-semibold text-gray-800">{item.name}</h2>
-                  <p className="text-gray-600">Precio: ${item.customerPrice.toLocaleString('es-MX')}</p>
-
+                  <p className="text-gray-600">
+                    Precio: {typeof item.customerPrice === 'number'
+                      ? `$${item.customerPrice.toLocaleString('es-MX')}`
+                      : 'Precio no disponible'}
+                  </p>
                   {/* Mostrar configuraciones */}
                   {item.selectedOptions && Object.entries(item.selectedOptions).map(([groupId, options]) => (
                     <div key={groupId} className="text-sm text-gray-700">
                       {options.map((opt: any) => (
                         <div key={opt._id} className="ml-4">
-                          - {opt.name} x{opt.quantity || 1} 
+                          - {opt.name} x{opt.quantity || 1}
                           {opt.selectedColor && (
                             <span className="ml-2 text-gray-500">({opt.selectedColor.name})</span>
                           )}

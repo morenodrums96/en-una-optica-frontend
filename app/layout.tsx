@@ -15,7 +15,6 @@ import { AuthSliderProvider } from '@/context/AuthSliderContext'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isAuthPage = pathname?.startsWith('/admin') || pathname === '/enUnaOpticaLogin'
-  const isLandingPage = pathname === '/'
 
   return (
     <html lang="es" suppressHydrationWarning>
