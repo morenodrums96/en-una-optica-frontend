@@ -149,9 +149,13 @@ export default function ShopPage() {
                         <div className="relative w-full mx-auto mb-4 bg-gray-100 rounded-xl overflow-hidden shadow-xl">
                             <img
                                 src={images[currentImageIndex]}
+                                onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src = '/imagen/placeholder-product.webp'
+                                }}
                                 alt={`Imagen de ${product.name} ${currentImageIndex + 1}`}
                                 className="w-full h-[450px] object-contain transition-transform duration-300 ease-in-out hover:scale-105"
                             />
+
 
                             {/* Miniaturas de imágenes */}
                             {hasMultipleImages && (
@@ -160,11 +164,15 @@ export default function ShopPage() {
                                         <img
                                             key={index}
                                             src={img}
+                                            onError={(e) => {
+                                                (e.currentTarget as HTMLImageElement).src = '/imagen/placeholder-product.webp'
+                                            }}
                                             alt={`Miniatura ${index + 1}`}
                                             onClick={() => setCurrentImageIndex(index)}
                                             className={`w-16 h-16 object-cover rounded-md cursor-pointer border-2 transition-transform duration-200 hover:scale-105 ${currentImageIndex === index ? 'border-primary-600' : 'border-transparent'
                                                 }`}
                                         />
+
                                     ))}
                                 </div>
                             )}

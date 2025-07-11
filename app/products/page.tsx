@@ -124,14 +124,16 @@ export default function BestSellersCarousel() {
                             </div>
 
                             <div className="h-[200px] w-full bg-white flex items-center justify-center">
-                                <Image
-                                    src={product.variants?.[0]?.image || '/images/placeholder-product.png'}
+                                <img
+                                    src={product.variants?.[0]?.image || '/imagen/placeholder-product.webp'}
+                                    onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = '/imagen/placeholder-product.webp'
+                                    }}
                                     alt={product.name}
-                                    width={500}
-                                    height={333}
                                     className="object-contain w-full h-full"
                                 />
                             </div>
+
 
                             <div className="p-4 text-center">
                                 <h3 className="text-lg font-semibold text-primary-900 truncate">{product.name}</h3>

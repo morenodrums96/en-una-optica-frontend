@@ -2,14 +2,44 @@
 
 import { useState, useEffect } from 'react'
 import ProductFormModal from '@/components/products/ProductFormModal'
-import { getCatalogByGroup, searchConfigurableActive, registresProduct, getAllProducts, getProductSelected, updateProduts, deleteProduct } from '@/lib/productsApis/productApis'
+import {
+  getCatalogByGroup,
+  searchConfigurableActive,
+  registresProduct,
+  getAllProducts,
+  getProductSelected,
+  updateProduts,
+  deleteProduct,
+} from '@/lib/productsApis/productApis'
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react'
 import FloatingMessage from '@/components/FloatingMessage/FloatingMessage'
 import ConfirmMessage from '@/components/FloatingMessage/ConfirmMessage'
 import Image from 'next/image'
+
+const ProductImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [imgSrc, setImgSrc] = useState(src || '/imagen/placeholder-product.webp')
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      fill
+      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+      className="object-cover rounded-md"
+      priority
+      onError={() => setImgSrc('/imagen/placeholder-product.webp')}
+    />
+  )
+}
+
 export default function ProductosPage() {
   const [showModal, setShowModal] = useState(false)
-  const [catalogs, setCatalogs] = useState({ frameMaterial: [], faceShape: [], frameShape: [], colors: [] })
+  const [catalogs, setCatalogs] = useState({
+    frameMaterial: [],
+    faceShape: [],
+    frameShape: [],
+    colors: [],
+  })
   const [configurableOptions, setConfigurableOptions] = useState([])
   const [products, setProducts] = useState([])
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
@@ -23,7 +53,8 @@ export default function ProductosPage() {
       const catalogData = await getCatalogByGroup()
       const options = await searchConfigurableActive()
 
-      const groupMap = (group: string) => catalogData.filter((c: any) => c.group === group)
+      const groupMap = (group: string) =>
+        catalogData.filter((c: any) => c.group === group)
 
       setCatalogs({
         frameMaterial: groupMap('frameMaterial'),
@@ -50,7 +81,6 @@ export default function ProductosPage() {
   const handleSaveProduct = async (data: any) => {
     try {
       if (data._id) {
-        // 🔄 Modo edición
         const message = await updateProduts(data._id, data)
         setSuccessMsg(message + '✅')
       } else {
@@ -60,12 +90,11 @@ export default function ProductosPage() {
 
       setShowModal(false)
       setSelectedProduct(null)
-      fetchProducts() // recargar productos
+      fetchProducts()
     } catch (error: any) {
       setErrorMsg('Error: ' + error.message)
     }
   }
-
 
   const handleEditProduct = async (id: string) => {
     try {
@@ -84,7 +113,6 @@ export default function ProductosPage() {
   useEffect(() => {
     if (showModal) loadCatalogs()
   }, [showModal])
-
 
   return (
     <main className="flex-1 p-6 ml-13 bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-primary-950 dark:to-primary-900 transition-colors duration-300 min-h-screen">
@@ -130,24 +158,26 @@ export default function ProductosPage() {
             className="bg-white dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col"
           >
             <div className="relative w-full aspect-video">
-              <Image
-                src={product.variants?.[0]?.image || '/images/placeholder.png'}
+              <ProductImage
+                src={product.variants?.[0]?.image}
                 alt={product.name}
-                fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                className="object-cover rounded-md"
-                priority
               />
             </div>
 
-
-
             <div className="flex-1 space-y-1">
               <h3 className="text-lg font-semibold text-primary-900 dark:text-white">{product.name}</h3>
-              <p className="text-sm text-primary-600 dark:text-primary-300">Categoría: <span className="font-medium">{product.category || 'N/A'}</span></p>
-              <p className="text-sm text-primary-600 dark:text-primary-300">Color: <span className="font-medium">{product.variants?.[0]?.color?.label || 'N/A'}</span></p>
-              <p className="text-sm text-primary-600 dark:text-primary-300">Precio: <span className="font-medium">${product.customerPrice}</span></p>
-              <p className="text-sm text-primary-600 dark:text-primary-300">Costo unitario: <span className="font-medium">${product.unitCost}</span></p>
+              <p className="text-sm text-primary-600 dark:text-primary-300">
+                Categoría: <span className="font-medium">{product.category || 'N/A'}</span>
+              </p>
+              <p className="text-sm text-primary-600 dark:text-primary-300">
+                Color: <span className="font-medium">{product.variants?.[0]?.color?.label || 'N/A'}</span>
+              </p>
+              <p className="text-sm text-primary-600 dark:text-primary-300">
+                Precio: <span className="font-medium">${product.customerPrice}</span>
+              </p>
+              <p className="text-sm text-primary-600 dark:text-primary-300">
+                Costo unitario: <span className="font-medium">${product.unitCost}</span>
+              </p>
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -158,7 +188,7 @@ export default function ProductosPage() {
               >
                 <Pencil className="h-5 w-5 text-primary-700 dark:text-white" />
               </button>
-              <button
+              <button data-allow-multiple
                 onClick={() => {
                   setConfirmDeleteId(product._id)
                   setConfirmDeleteName(product.name)
@@ -195,7 +225,5 @@ export default function ProductosPage() {
         />
       )}
     </main>
-
-
   )
 }

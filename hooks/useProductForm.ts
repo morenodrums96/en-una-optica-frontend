@@ -2,8 +2,6 @@
 
 import { useState, useEffect, ChangeEvent } from 'react'
 import { ProductFormData, VariantType } from '@/types/types'
-import { uploadToS3 } from '@/lib/productsApis/productApis'
-
 export function useProductForm(isOpen: boolean, defaultData?: any) {
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -66,7 +64,9 @@ export function useProductForm(isOpen: boolean, defaultData?: any) {
           color: typeof v.color === 'object' ? v.color._id : v.color,
           quantity: v.quantity.toString(),
           image: v.image,
-          images: v.images || []
+          images: v.images || [],
+          galleryFiles: [], // importante: limpiar archivos al editar desde la DB
+
         })),
         configurableOptions: defaultData.configurableOptions?.map((opt: any) =>
           typeof opt === 'object' ? opt._id : opt
@@ -120,41 +120,37 @@ export function useProductForm(isOpen: boolean, defaultData?: any) {
     })
   }
 
-  const handleVariantGallery = async (index: number, files: FileList | null) => {
-    if (!files) return
-
-    const urls: string[] = []
-    for (const file of Array.from(files)) {
-      const s3Url = await uploadToS3(file)
-      urls.push(s3Url)
-    }
-
-    setFormData(prev => {
-      const updated = [...prev.variants]
-      const currentImages = new Set<string>(updated[index].images)
-      urls.forEach(url => currentImages.add(url))
-      updated[index].images = Array.from(currentImages)
-      return { ...prev, variants: updated }
-    })
-  }
 
   const removeImageFromVariant = (variantIndex: number, imageIndex: number) => {
     setFormData(prev => {
       const updated = [...prev.variants]
-      const currentImages = [...updated[variantIndex].images]
-      currentImages.splice(imageIndex, 1)
-      updated[variantIndex].images = currentImages
+      const variant = { ...updated[variantIndex] }
+
+      const imageToRemove = variant.images[imageIndex]
+
+      // Eliminar imagen por valor (no por índice)
+      variant.images = variant.images.filter(url => url !== imageToRemove)
+
+      if (variant.galleryFiles) {
+        variant.galleryFiles = variant.galleryFiles.filter(item => item.previewUrl !== imageToRemove)
+      }
+
+      updated[variantIndex] = variant
+
+      // Ajustar índice de galería si es necesario
+      setGalleryIndices(prev => {
+        const updatedIndices = [...prev]
+        const total = variant.images.length
+        const currentIndex = prev[variantIndex]
+        updatedIndices[variantIndex] = currentIndex >= total ? Math.max(0, total - 1) : currentIndex
+        return updatedIndices
+      })
+
       return { ...prev, variants: updated }
     })
-
-    setGalleryIndices(prev => {
-      const updated = [...prev]
-      const newLength = formData.variants[variantIndex].images.length - 1
-      const newIndex = Math.max(0, Math.min(prev[variantIndex], newLength))
-      updated[variantIndex] = newIndex
-      return updated
-    })
   }
+
+
 
   const addVariant = () => {
     setFormData(prev => ({
@@ -213,7 +209,6 @@ export function useProductForm(isOpen: boolean, defaultData?: any) {
     handleInput,
     handleToggle,
     handleVariantChange,
-    handleVariantGallery,
     removeImageFromVariant,
     addVariant,
     removeVariant,

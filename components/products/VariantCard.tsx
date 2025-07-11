@@ -1,6 +1,8 @@
 'use client'
 
 import { VariantType } from '@/types/types'
+import FloatingMessage from '@/components/FloatingMessage/FloatingMessage'
+import { useState } from 'react'
 
 type Props = {
   index: number
@@ -31,16 +33,57 @@ export default function VariantCard({
   onRemoveVariant,
   canRemove
 }: Props) {
+  const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp']
+  const [errorMsg, setErrorMsg] = useState('')
+
   const handleMainImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
+      if (!allowedExtensions.includes(ext)) {
+
+        setErrorMsg('Solo se permiten imágenes con extensión .png, .jpg, .jpeg o .webp')
+        return
+      }
       onMainImageSelect(index, file)
     }
   }
 
+  const handleGalleryImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+
+    const validFiles = files.filter(file => {
+      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
+      return allowedExtensions.includes(ext)
+    })
+
+    if (validFiles.length !== files.length) {
+      setErrorMsg('Solo se permiten imágenes con extensión .png, .jpg, .jpeg o .webp')
+    }
+
+    if (validFiles.length > 0) {
+      const currentFileNames = new Set((variant.galleryFiles || []).map(f => f.file.name))
+
+      const newFiles = validFiles.filter(file => !currentFileNames.has(file.name))
+
+      if (newFiles.length === 0) return
+
+      const dataTransfer = new DataTransfer()
+      newFiles.forEach(file => dataTransfer.items.add(file))
+
+      onGalleryUpload(index, dataTransfer.files)
+    }
+  }
+
+
+
   return (
+
     <div className="p-5 bg-white dark:bg-primary-900 rounded-xl border border-primary-200 dark:border-primary-700 shadow-md hover:shadow-lg transition-shadow duration-300 space-y-4">
       <h4 className="font-semibold text-primary-800 dark:text-white">Variante {index + 1}</h4>
+      {errorMsg && (
+        <FloatingMessage message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
+      )}
 
       {/* Color y cantidad */}
       <div className="grid grid-cols-2 gap-4">
@@ -82,13 +125,20 @@ export default function VariantCard({
           <input
             id={`mainImage-${index}`}
             type="file"
-            accept="image/*"
+            accept=".png,.jpg,.jpeg,.webp"
             onChange={handleMainImage}
             className="hidden"
           />
           {variant.image && (
             <div className="flex justify-center">
-              <img src={variant.image} alt="Principal" className="w-full max-w-[150px] h-auto object-cover rounded border shadow" />
+              <img
+                src={variant.image}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/imagen/placeholder-product.webp'
+                }}
+                alt="Principal"
+                className="w-full max-w-[150px] h-auto object-cover rounded border shadow"
+              />
             </div>
           )}
         </div>
@@ -102,8 +152,8 @@ export default function VariantCard({
             id={`galleryImages-${index}`}
             type="file"
             multiple
-            accept="image/*"
-            onChange={(e) => onGalleryUpload(index, e.target.files)}
+            accept=".png,.jpg,.jpeg,.webp"
+            onChange={handleGalleryImages}
             className="hidden"
           />
 
@@ -111,9 +161,13 @@ export default function VariantCard({
             <div className="relative w-full max-w-[150px] h-[150px] mx-auto">
               <img
                 src={variant.images[galleryIndex]}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/imagen/placeholder-product.webp'
+                }}
                 className="w-full h-full object-cover rounded border transition-all duration-300 ease-in-out"
                 alt={`img-${galleryIndex}`}
               />
+
               <button
                 type="button"
                 onClick={() => onRemoveGalleryImage(index, galleryIndex)}

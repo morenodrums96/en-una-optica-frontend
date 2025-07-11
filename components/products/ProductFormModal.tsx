@@ -1,5 +1,5 @@
 'use client'
-
+import { useState, useEffect } from 'react'
 import { useProductForm } from '@/hooks/useProductForm'
 import VariantCard from '@/components/products/VariantCard'
 import ProductFields from '@/components/products/ProductFields'
@@ -37,50 +37,103 @@ export default function ProductFormModal({
     handleInput,
     handleToggle,
     handleVariantChange,
-    handleVariantGallery,
     removeImageFromVariant,
     addVariant,
     removeVariant,
     validateForm
   } = useProductForm(isOpen, defaultData)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return // prevención extra
     if (!validateForm()) return
 
-    // Subir imágenes antes de enviar
-    const uploadedVariants = await Promise.all(formData.variants.map(async (v) => {
-      let mainImageUrl = v.image
-      let galleryUrls: string[] = v.images || []
+    setIsSubmitting(true)
 
-      if (v.imageFile) {
-        mainImageUrl = await uploadToS3(v.imageFile)
+    try {
+      const uploadedVariants = await Promise.all(formData.variants.map(async (v) => {
+        let mainImageUrl = v.image
+
+        if (v.imageFile) {
+          mainImageUrl = await uploadToS3(v.imageFile)
+        }
+
+        let galleryUrls: string[] = []
+
+        if (v.galleryFiles && v.galleryFiles.length > 0) {
+          const uploaded = await Promise.all(
+            v.galleryFiles.map(item => uploadToS3(item.file))
+          )
+          const existing = v.images.filter(url => !url.startsWith('blob:'))
+          galleryUrls = [...existing, ...uploaded]
+        } else {
+          galleryUrls = v.images
+        }
+
+        return {
+          color: v.color,
+          quantity: parseInt(v.quantity),
+          image: mainImageUrl,
+          images: galleryUrls
+        }
+      }))
+
+      const productToSend = {
+        ...formData,
+        unitCost: parseFloat(formData.unitCost),
+        customerPrice: parseFloat(formData.customerPrice),
+        variants: uploadedVariants,
+        configurableOptions: selectedOptions
       }
 
-      if (v.galleryFiles && v.galleryFiles.length > 0) {
-        galleryUrls = await Promise.all(v.galleryFiles.map(file => uploadToS3(file)))
-      }
-
-      return {
-        color: v.color,
-        quantity: parseInt(v.quantity),
-        image: mainImageUrl,
-        images: galleryUrls
-      }
-    }))
-
-    const productToSend = {
-      ...formData,
-      unitCost: parseFloat(formData.unitCost),
-      customerPrice: parseFloat(formData.customerPrice),
-      variants: uploadedVariants,
-      configurableOptions: selectedOptions
+      onSubmit(productToSend)
+      // No reactivamos el botón si se guarda correctamente (queda bloqueado)
+    } catch (err) {
+      console.error('Error al guardar:', err)
+      setIsSubmitting(false) // Solo reactivar si falla
     }
-
-    onSubmit(productToSend)
   }
 
+  useEffect(() => {
+    if (isOpen) {
+      setIsSubmitting(false)
+    }
+  }, [isOpen])
+
+
+
   if (!isOpen) return null
+  const handleVariantGallery = (index: number, files: FileList | null) => {
+    if (!files) return
+
+    const fileArray = Array.from(files)
+
+    setFormData(prev => {
+      const updated = [...prev.variants]
+      const variant = updated[index]
+
+      variant.galleryFiles ??= []
+      variant.images ??= []
+
+      const existingNames = new Set(variant.galleryFiles.map(item => item.file.name))
+
+      const newItems = fileArray
+        .filter(file => !existingNames.has(file.name))
+        .map(file => {
+          const previewUrl = URL.createObjectURL(file)
+          return { file, previewUrl }
+        })
+
+      variant.galleryFiles.push(...newItems)
+      variant.images.push(...newItems.map(item => item.previewUrl))
+
+      return { ...prev, variants: updated }
+    })
+  }
+
+
+
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -144,41 +197,6 @@ export default function ProductFormModal({
             <ToggleSwitches formData={formData} onToggle={handleToggle} />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-primary-700 rounded shadow border">
-              <span className="text-sm text-gray-700 dark:text-white">Visible para el cliente</span>
-              <button
-                type="button"
-                onClick={() => handleToggle('frond')}
-                className={`w-10 h-6 flex items-center bg-gray-300 rounded-full p-1 transition-colors duration-300 ${formData.frond ? 'bg-primary-600' : ''}`}
-              >
-                <span className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${formData.frond ? 'translate-x-4' : ''}`}></span>
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-primary-700 rounded shadow border">
-              <span className="text-sm text-gray-700 dark:text-white">Cantidad modificable</span>
-              <button
-                type="button"
-                onClick={() => handleToggle('canModifyQuantity')}
-                className={`w-10 h-6 flex items-center bg-gray-300 rounded-full p-1 transition-colors duration-300 ${formData.canModifyQuantity ? 'bg-primary-600' : ''}`}
-              >
-                <span className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${formData.canModifyQuantity ? 'translate-x-4' : ''}`}></span>
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-primary-700 rounded shadow border">
-              <span className="text-sm text-gray-700 dark:text-white">Aplicar IVA</span>
-              <button
-                type="button"
-                onClick={() => handleToggle('iva')}
-                className={`w-10 h-6 flex items-center bg-gray-300 rounded-full p-1 transition-colors duration-300 ${formData.iva ? 'bg-primary-600' : ''}`}
-              >
-                <span className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${formData.iva ? 'translate-x-4' : ''}`}></span>
-              </button>
-            </div>
-          </div>
-
           <div className="flex justify-end gap-2 mt-6">
             <button
               type="button"
@@ -190,10 +208,15 @@ export default function ProductFormModal({
 
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-500 text-white rounded"
+              disabled={isSubmitting}
+              className={`px-4 py-2 rounded text-white transition ${isSubmitting
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-primary-500 hover:bg-primary-600'
+                }`}
             >
-              {defaultData ? 'Actualizar' : 'Guardar'}
+              {isSubmitting ? 'Guardando...' : defaultData ? 'Actualizar' : 'Guardar'}
             </button>
+
           </div>
         </form>
       </div>

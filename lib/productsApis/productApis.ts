@@ -87,6 +87,7 @@ export async function getAllProducts() {
     throw new Error(error.message || 'No se pudo obtener el catálogo')
   }
 }
+
 export async function getProductSelected(_id: String) {
   try {
     const res = await fetch(`${API_URL}/api/products/selected/${_id}`, {

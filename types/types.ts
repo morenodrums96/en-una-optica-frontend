@@ -1,13 +1,20 @@
 // types.ts
 
+export type GalleryItem = {
+  file: File
+  previewUrl: string
+}
+
 export type VariantType = {
   color: string
   quantity: string
-  imageFile?: File               // ✅ archivo imagen principal (para subir a S3)
-  galleryFiles?: File[]         // ✅ archivos de galería (para subir a S3)
-  image?: string                // ✅ URL final en S3 o preview local
-  images: string[]
+  imageFile?: File
+  galleryFiles?: GalleryItem[]
+  image?: string
+  images: string[] // estas deben venir del previewUrl
 }
+
+
 
 export type ProductFormData = {
   name: string
@@ -27,4 +34,5 @@ export type ProductFormData = {
   canModifyQuantity: boolean
   iva: boolean
   size: string
+  
 }
