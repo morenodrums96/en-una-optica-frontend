@@ -12,6 +12,7 @@ const breadcrumbLabels: Record<string, string> = {
   employee: 'Empleados',
   financial: 'Finanzas',
   inicio: 'Inicio',
+  costManagement: 'Gestión de Costos ',
   all: 'Todos',
 }
 

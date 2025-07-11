@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import ProductFormModal from '@/components/products/ProductFormModal'
 import {
   getCatalogByGroup,
   searchConfigurableActive,
   registresProduct,
-  getAllProducts,
+  getAllProductsByPages,
   getProductSelected,
   updateProduts,
   deleteProduct,
@@ -33,6 +33,9 @@ const ProductImage = ({ src, alt }: { src: string; alt: string }) => {
 }
 
 export default function ProductosPage() {
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [catalogs, setCatalogs] = useState({
     frameMaterial: [],
@@ -41,12 +44,70 @@ export default function ProductosPage() {
     colors: [],
   })
   const [configurableOptions, setConfigurableOptions] = useState([])
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState<any[]>([])
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [confirmDeleteName, setConfirmDeleteName] = useState<string | null>(null)
+
+  // ⬇️ Asegúrate de declarar filters antes de usarse en fetchProducts
+  const [filters, setFilters] = useState({
+    name: '',
+    minPrice: '',
+    maxPrice: '',
+  })
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    if (filters[name as keyof typeof filters] !== value) {
+      setProducts([])
+      setPage(1)
+      setFilters(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  // 🔁 Reiniciar productos al cambiar filtros
+  useEffect(() => {
+    setProducts([])
+    setPage(1)
+  }, [filters])
+
+  const observer = useRef<IntersectionObserver | null>(null)
+
+  const lastProductRef = useCallback(
+    (node: any) => {
+      if (loading) return
+      if (observer.current) observer.current.disconnect()
+
+      observer.current = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage(prev => prev + 1)
+        }
+      })
+
+      if (node) observer.current.observe(node)
+    },
+    [loading, hasMore]
+  )
+
+  const fetchProducts = async () => {
+    setLoading(true)
+    try {
+      const { products: newProducts, total } = await getAllProductsByPages(page, 10, filters)
+      setProducts(prev => [...prev, ...newProducts])
+      setHasMore((products.length + newProducts.length) < total)
+    } catch (error) {
+      setErrorMsg('Error al cargar productos:' + error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchProducts()
+  }, [filters, page])
+
 
   const loadCatalogs = async () => {
     try {
@@ -69,15 +130,6 @@ export default function ProductosPage() {
     }
   }
 
-  const fetchProducts = async () => {
-    try {
-      const { products } = await getAllProducts()
-      setProducts(products)
-    } catch (error) {
-      setErrorMsg('Error al cargar productos:' + error)
-    }
-  }
-
   const handleSaveProduct = async (data: any) => {
     try {
       if (data._id) {
@@ -90,7 +142,8 @@ export default function ProductosPage() {
 
       setShowModal(false)
       setSelectedProduct(null)
-      fetchProducts()
+      setProducts([])
+      setPage(1) // reiniciar lista
     } catch (error: any) {
       setErrorMsg('Error: ' + error.message)
     }
@@ -107,10 +160,6 @@ export default function ProductosPage() {
   }
 
   useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  useEffect(() => {
     if (showModal) loadCatalogs()
   }, [showModal])
 
@@ -122,7 +171,6 @@ export default function ProductosPage() {
       {errorMsg && (
         <FloatingMessage message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
       )}
-
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-bold text-primary-900 dark:text-white tracking-tight">Productos</h2>
@@ -138,6 +186,33 @@ export default function ProductosPage() {
           Agregar producto
         </button>
       </div>
+      <div className="mb-6 flex flex-wrap gap-4 items-end">
+        <input
+          name="name"
+          value={filters.name}
+          onChange={handleFilterChange}
+          placeholder="Buscar por nombre"
+          className="border px-3 py-2 rounded-md text-sm"
+        />
+        <input
+          name="minPrice"
+          value={filters.minPrice}
+          onChange={handleFilterChange}
+          placeholder="Precio mínimo"
+          type="number"
+          className="border px-3 py-2 rounded-md text-sm"
+        />
+        <input
+          name="maxPrice"
+          value={filters.maxPrice}
+          onChange={handleFilterChange}
+          placeholder="Precio máximo"
+          type="number"
+          className="border px-3 py-2 rounded-md text-sm"
+        />
+      </div>
+
+
 
       <ProductFormModal
         isOpen={showModal}
@@ -152,56 +227,62 @@ export default function ProductosPage() {
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {products.map((product: any) => (
-          <div
-            key={product._id}
-            className="bg-white dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col"
-          >
-            <div className="relative w-full aspect-video">
-              <ProductImage
-                src={product.variants?.[0]?.image}
-                alt={product.name}
-              />
-            </div>
+        {products.map((product: any, i: number) => {
+          const isLast = i === products.length - 1
+          return (
+            <div
+              key={product._id}
+              ref={isLast ? lastProductRef : null}
+              className="card-hover-animated bg-white dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col"
+            >
+              <div className="relative w-full aspect-video">
+                <ProductImage
+                  src={product.variants?.[0]?.image}
+                  alt={product.name}
+                />
+              </div>
 
-            <div className="flex-1 space-y-1">
-              <h3 className="text-lg font-semibold text-primary-900 dark:text-white">{product.name}</h3>
-              <p className="text-sm text-primary-600 dark:text-primary-300">
-                Categoría: <span className="font-medium">{product.category || 'N/A'}</span>
-              </p>
-              <p className="text-sm text-primary-600 dark:text-primary-300">
-                Color: <span className="font-medium">{product.variants?.[0]?.color?.label || 'N/A'}</span>
-              </p>
-              <p className="text-sm text-primary-600 dark:text-primary-300">
-                Precio: <span className="font-medium">${product.customerPrice}</span>
-              </p>
-              <p className="text-sm text-primary-600 dark:text-primary-300">
-                Costo unitario: <span className="font-medium">${product.unitCost}</span>
-              </p>
-            </div>
+              <div className="flex-1 space-y-1">
+                <h3 className="text-lg font-semibold text-primary-900 dark:text-white">{product.name}</h3>
+                <p className="text-sm text-primary-600 dark:text-primary-300">
+                  Categoría: <span className="font-medium">{product.category || 'N/A'}</span>
+                </p>
+                <p className="text-sm text-primary-600 dark:text-primary-300">
+                  Precio: <span className="font-medium">${product.customerPrice}</span>
+                </p>
+                <p className="text-sm text-primary-600 dark:text-primary-300">
+                  Costo unitario: <span className="font-medium">${product.unitCost}</span>
+                </p>
+              </div>
 
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={() => handleEditProduct(product._id)}
-                className="p-2 rounded-lg bg-primary-100 dark:bg-primary-800 hover:bg-primary-200 dark:hover:bg-primary-700 transition"
-                title="Editar"
-              >
-                <Pencil className="h-5 w-5 text-primary-700 dark:text-white" />
-              </button>
-              <button data-allow-multiple
-                onClick={() => {
-                  setConfirmDeleteId(product._id)
-                  setConfirmDeleteName(product.name)
-                }}
-                className="p-2 rounded-lg bg-red-100 dark:bg-red-700 hover:bg-red-200 dark:hover:bg-red-600 transition"
-                title="Eliminar"
-              >
-                <Trash2 className="h-5 w-5 text-red-700 dark:text-white" />
-              </button>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => handleEditProduct(product._id)}
+                  className="p-2 rounded-lg bg-primary-100 dark:bg-primary-800 hover:bg-primary-200 dark:hover:bg-primary-700 transition"
+                  title="Editar"
+                >
+                  <Pencil className="h-5 w-5 text-primary-700 dark:text-white" />
+                </button>
+                <button
+                  data-allow-multiple
+                  onClick={() => {
+                    setConfirmDeleteId(product._id)
+                    setConfirmDeleteName(product.name)
+                  }}
+                  className="p-2 rounded-lg bg-red-100 dark:bg-red-700 hover:bg-red-200 dark:hover:bg-red-600 transition"
+                  title="Eliminar"
+                >
+                  <Trash2 className="h-5 w-5 text-red-700 dark:text-white" />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
+
+      {loading && (
+        <div className="text-center py-6 text-primary-600 dark:text-primary-300">Cargando más productos...</div>
+      )}
 
       {confirmDeleteId && (
         <ConfirmMessage
@@ -214,7 +295,8 @@ export default function ProductosPage() {
             try {
               await deleteProduct(confirmDeleteId)
               setSuccessMsg('Producto eliminado correctamente ✅')
-              fetchProducts()
+              setProducts([])
+              setPage(1)
             } catch (error: any) {
               setErrorMsg(error.message || 'Error al eliminar el producto')
             } finally {

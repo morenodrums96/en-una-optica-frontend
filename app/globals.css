@@ -199,3 +199,43 @@ body {
 .animate-slide-in-right {
   animation: slide-in-right 0.4s ease-out forwards;
 }
+
+
+.react-datepicker__triangle {
+  display: none;
+}
+
+.react-datepicker {
+  animation: fadeInDown 0.2s ease-out;
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+  background-color: white;
+  overflow: hidden;
+}
+
+.dark .react-datepicker {
+  background-color: #1f2937; /* neutral-800 */
+  color: #f1f5f9; /* neutral-100 */
+}
+
+.dark .react-datepicker__month-container {
+  background-color: #1f2937;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Botones de navegación */
+.react-datepicker__navigation {
+  top: 10px;
+}

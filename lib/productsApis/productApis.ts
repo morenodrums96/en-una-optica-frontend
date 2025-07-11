@@ -201,3 +201,31 @@ export const cleanupTempImages = async (urls: string[]) => {
     }
   }
 }
+
+export async function getAllProductsByPages(page = 1, limit = 10, filters = {}) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    ...Object.fromEntries(Object.entries(filters).map(([key, val]) => [key, String(val)])),
+  })
+
+  const res = await fetch(`${API_URL}/api/products/byPages?${params}`)
+  if (!res.ok) throw new Error('Error al cargar los productos')
+  return await res.json()
+}
+
+export async function putExpense(id: string, data: {
+  type: string
+  description: string
+  amount: number
+  date: string
+}) {
+  const res = await fetch(`${API_URL}/api/expenses/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error('Error al actualizar el gasto')
+  return await res.json()
+}

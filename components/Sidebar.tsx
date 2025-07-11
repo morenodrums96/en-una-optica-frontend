@@ -12,6 +12,7 @@ import {
   Sun,
   Moon,
   Folders,
+  Calculator,
   Image 
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/admin/financial', icon: <LineChart className="h-5 w-5" />, label: 'Finanzas' },
   { href: '/admin/catalogs', icon: <Folders   className="h-5 w-5" />, label: 'Catálogos' },
   { href: '/admin/gallery', icon: <Image className="h-5 w-5" />, label: 'Marketing Media' },
+{ href: '/admin/costManagement', icon: <Calculator className="h-5 w-5" />, label: 'Gestión de Costos' },
 
 ]
 
