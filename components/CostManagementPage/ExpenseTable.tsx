@@ -1,7 +1,7 @@
 // components/CostManagementPage/ExpenseTable.tsx
 
 import { Pencil, Trash2 } from 'lucide-react'
-import { Expense } from '@/types/expense'
+import type { Expense } from '@/types/expense'
 
 interface Props {
   expenses: Expense[]
@@ -13,9 +13,9 @@ export default function ExpenseTable({ expenses, onEdit, onDelete }: Props) {
   const total = expenses.reduce((sum, e) => sum + e.unitCost * e.quantity, 0)
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left">
-        <thead className="bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-100 uppercase tracking-wider text-xs">
+    <div className="overflow-x-auto rounded-xl shadow-md">
+      <table className="w-full text-sm text-left border-collapse">
+        <thead className="bg-primary-100 dark:bg-neutral-900 text-primary-800 dark:text-primary-100 uppercase tracking-wider text-xs border-b border-neutral-200 dark:border-neutral-700">
           <tr>
             <th className="px-6 py-3">Tipo</th>
             <th className="px-6 py-3">Descripción</th>
@@ -33,14 +33,19 @@ export default function ExpenseTable({ expenses, onEdit, onDelete }: Props) {
               <tr
                 key={e._id}
                 className={`${i % 2 === 0
-                  ? 'bg-white dark:bg-neutral-850'
-                  : 'bg-neutral-50 dark:bg-neutral-800'
-                  } border-b border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition`}
+                    ? ''
+                    : 'bg-neutral-100 dark:bg-neutral-800'
+
+                  } border-b border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors duration-150`}
               >
-                <td className="px-6 py-4 font-medium">{e.type}</td>
-                <td className="px-6 py-4">{e.description}</td>
-                <td className="px-6 py-4 text-right">${e.unitCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                <td className="px-6 py-4 text-right">{e.quantity}</td>
+                <td className="px-6 py-4 font-medium text-neutral-800 dark:text-neutral-200">{e.type}</td>
+                <td className="px-6 py-4 text-neutral-700 dark:text-neutral-300">{e.description}</td>
+                <td className="px-6 py-4 text-right text-neutral-800 dark:text-neutral-200">
+                  ${e.unitCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                </td>
+                <td className="px-6 py-4 text-right text-neutral-800 dark:text-neutral-200">
+                  {e.quantity}
+                </td>
                 <td className="px-6 py-4 text-right font-semibold text-green-700 dark:text-green-400">
                   ${(e.unitCost * e.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                 </td>
@@ -63,14 +68,14 @@ export default function ExpenseTable({ expenses, onEdit, onDelete }: Props) {
                 <td className="px-6 py-4 text-center space-x-2">
                   <button
                     onClick={() => onEdit(e)}
-                    className="p-2 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 transition"
+                    className="p-2 rounded-md hover:bg-blue-100 dark:hover:bg-blue-950 text-blue-600 dark:text-blue-400 transition-colors"
                     title="Editar gasto"
                   >
                     <Pencil className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onDelete(e._id!)}
-                    className="p-2 rounded-md hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 transition"
+                    className="p-2 rounded-md hover:bg-red-100 dark:hover:bg-red-950 text-red-600 dark:text-red-400 transition-colors"
                     title="Eliminar gasto"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -80,16 +85,21 @@ export default function ExpenseTable({ expenses, onEdit, onDelete }: Props) {
             ))
           ) : (
             <tr>
-              <td colSpan={8} className="text-center p-8 text-neutral-400 dark:text-neutral-500 italic">
+              <td
+                colSpan={8}
+                className="text-center p-8 text-neutral-400 dark:text-neutral-500 italic"
+              >
                 No hay gastos registrados para el período seleccionado.
               </td>
             </tr>
           )}
         </tbody>
         {expenses.length > 0 && (
-          <tfoot className="bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-100">
+          <tfoot className="bg-primary-100 dark:bg-neutral-900 text-primary-800 dark:text-primary-100 border-t border-neutral-300 dark:border-neutral-700">
             <tr>
-              <td className="px-6 py-4 font-bold" colSpan={4}>Total</td>
+              <td className="px-6 py-4 font-bold" colSpan={4}>
+                Total
+              </td>
               <td className="px-6 py-4 text-right font-bold text-green-800 dark:text-green-300">
                 ${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </td>
@@ -99,5 +109,6 @@ export default function ExpenseTable({ expenses, onEdit, onDelete }: Props) {
         )}
       </table>
     </div>
+
   )
 }

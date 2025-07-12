@@ -231,9 +231,9 @@ export default function ProductosPage() {
           const isLast = i === products.length - 1
           return (
             <div
-              key={product._id}
+              key={`${product._id}-${i}`}
               ref={isLast ? lastProductRef : null}
-              className="card-hover-animated bg-white dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col"
+              className="cursor-pointer card-hover-animated bg-white dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col"
             >
               <div className="relative w-full aspect-video">
                 <ProductImage

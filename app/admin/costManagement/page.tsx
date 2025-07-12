@@ -25,7 +25,7 @@ registerLocale('es', es)
 export default function CostManagementPage() {
     const [expenses, setExpenses] = useState<Expense[]>([])
     const [form, setForm] = useState({
-        type: 'Gasto Indirecto',
+        type: 'Gasto Fijo',
         description: '',
         unitCost: '',
         quantity: '',
@@ -80,7 +80,7 @@ export default function CostManagementPage() {
 
             setExpenses((prev) => [savedExpense, ...prev])
             setForm({
-                type: 'Gasto Indirecto',
+                type: 'Gasto Variable',
                 description: '',
                 unitCost: '',
                 quantity: '',
@@ -133,7 +133,7 @@ export default function CostManagementPage() {
             )
             setEditingExpense(null)
             setForm({
-                type: 'Gasto Indirecto',
+                type: 'Gasto Variable',
                 description: '',
                 unitCost: '',
                 quantity: '',

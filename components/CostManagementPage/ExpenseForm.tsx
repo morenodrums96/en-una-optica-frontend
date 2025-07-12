@@ -40,8 +40,8 @@ export default function ExpenseForm({ form, onChange, onSubmit, isFormValid }: P
     onChange={onChange}
     className="p-2 rounded-md border dark:bg-neutral-900 dark:border-neutral-700"
   >
-    <option value="Gasto Indirecto">Gasto Indirecto</option>
-    <option value="Costo Directo">Costo Directo</option>
+    <option value="Gasto Fijo">Gasto Fijo</option>
+    <option value="Gasto Variable">Gasto Variable</option>
   </select>
 
   {/* Descripción */}

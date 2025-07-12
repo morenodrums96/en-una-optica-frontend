@@ -229,3 +229,20 @@ export async function putExpense(id: string, data: {
   if (!res.ok) throw new Error('Error al actualizar el gasto')
   return await res.json()
 }
+
+export async function getCustomerPrice(unitCost: number) {
+  try {
+    const res = await fetch(`${API_URL}/api/products/customerPrice?unitCost=${unitCost}`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+
+    if (!res.ok) throw new Error('Error al calcular el precio.')
+
+    const data = await res.json()
+    return data.customerPrice
+  } catch (error: any) {
+    console.error('Error al obtener el precio sugerido:', error)
+    throw new Error(error.message || 'No se pudo calcular el precio')
+  }
+}

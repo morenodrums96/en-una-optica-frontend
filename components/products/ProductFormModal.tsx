@@ -144,11 +144,13 @@ export default function ProductFormModal({
         <form onSubmit={handleSubmit} className="p-5 bg-white dark:bg-primary-900 rounded-xl border border-primary-200 dark:border-primary-700 shadow-md hover:shadow-lg transition-shadow duration-300 space-y-4">
           <ProductFields
             formData={formData}
+            setFormData={setFormData}
             errors={errors}
             catalogs={catalogs}
             handleInput={handleInput}
             setErrors={setErrors}
           />
+
 
           <div className="space-y-6">
             {formData.variants.map((v, i) => (
