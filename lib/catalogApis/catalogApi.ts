@@ -18,6 +18,7 @@ export type ConfigurableOption = {
   allowMultiple: boolean
   enabled: boolean
 }
+
 export async function getCatalogByGroup(group: string): Promise<CatalogEntry[]> {
   try {
     const res = await fetch(`${API_URL}/api/catalogs?group=${group}`, {

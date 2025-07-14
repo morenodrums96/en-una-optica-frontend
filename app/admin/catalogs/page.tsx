@@ -44,10 +44,12 @@ export type ConfigurableOption = {
 }
 
 const tabs = [
+
   { id: 'faceShape', label: 'Formas de Cara' },
   { id: 'frameShape', label: 'Forma de Armazón' },
   { id: 'frameMaterial', label: 'Material del Armazón' },
   { id: 'color', label: 'Colores del Armazón' },
+  { id: 'expenses', label: 'Gastos' },
   { id: 'configurableOptions', label: 'Opciones Configurables' },
 ]
 
