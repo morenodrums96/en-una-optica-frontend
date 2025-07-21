@@ -1,6 +1,9 @@
 import { API_URL } from '../api'
 
-
+type CustomerPriceResponse = {
+  customerPrice: number
+  priceWithoutVAT: number
+}
 export async function getCatalogByGroup() {
   try {
     const res = await fetch(`${API_URL}/api/allCatalogs`, {
@@ -206,7 +209,7 @@ export async function getAllProductsByPages(page = 1, limit = 10, filters = {}) 
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
-    ...Object.fromEntries(Object.entries(filters).map(([key, val]) => [key, String(val)])),
+    ...Object.fromEntries(Object.entries(filters).map(([key, val]) => [key, String(val)]))
   })
 
   const res = await fetch(`${API_URL}/api/products/byPages?${params}`)
@@ -230,7 +233,7 @@ export async function putExpense(id: string, data: {
   return await res.json()
 }
 
-export async function getCustomerPrice(unitCost: number) {
+export async function getCustomerPrice(unitCost: number): Promise<CustomerPriceResponse> {
   try {
     const res = await fetch(`${API_URL}/api/products/customerPrice?unitCost=${unitCost}`, {
       method: 'GET',
@@ -240,7 +243,10 @@ export async function getCustomerPrice(unitCost: number) {
     if (!res.ok) throw new Error('Error al calcular el precio.')
 
     const data = await res.json()
-    return data.customerPrice
+    return {
+      customerPrice: data.customerPrice,
+      priceWithoutVAT: data.priceWithoutVAT,
+    }
   } catch (error: any) {
     console.error('Error al obtener el precio sugerido:', error)
     throw new Error(error.message || 'No se pudo calcular el precio')

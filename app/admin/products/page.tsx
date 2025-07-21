@@ -15,6 +15,7 @@ import { PlusCircle, Pencil, Trash2 } from 'lucide-react'
 import FloatingMessage from '@/components/FloatingMessage/FloatingMessage'
 import ConfirmMessage from '@/components/FloatingMessage/ConfirmMessage'
 import Image from 'next/image'
+import { normalizeProductData } from '@/lib/utils/normalizeProduct'
 
 const ProductImage = ({ src, alt }: { src: string; alt: string }) => {
   const [imgSrc, setImgSrc] = useState(src || '/imagen/placeholder-product.webp')
@@ -152,12 +153,14 @@ export default function ProductosPage() {
   const handleEditProduct = async (id: string) => {
     try {
       const res = await getProductSelected(id)
-      setSelectedProduct(res.product)
+      const normalized = normalizeProductData(res.product)
+      setSelectedProduct(normalized)
       setShowModal(true)
     } catch (error) {
       console.error('Error al obtener producto para editar:', error)
     }
   }
+
 
   useEffect(() => {
     if (showModal) loadCatalogs()

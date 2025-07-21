@@ -8,17 +8,19 @@ import { XCircle } from 'lucide-react'
 import { es } from 'date-fns/locale/es'
 import { registerLocale } from 'react-datepicker'
 import FloatingMessage from '@/components/FloatingMessage/FloatingMessage'
-import ConfirmMessage from '@/components/FloatingMessage/ConfirmMessage'
 import ExpenseForm from '@/components/CostManagementPage/ExpenseForm'
 import ExpenseTable from '@/components/CostManagementPage/ExpenseTable'
 import { Expense } from '@/types/expense'
 import { ChangeEvent } from 'react'
+import StockTable from '@/components/CostManagementPage/StockTable'
+import { StockItem } from '@/types/stockItem'
 
 import {
     getExpenses,
     postExpenses,
     deleteExpenses,
     putExpense,
+    getStockItems,
 } from '@/lib/expensesApis/expensesApis'
 
 registerLocale('es', es)
@@ -32,6 +34,7 @@ export default function CostManagementPage() {
         quantity: '',
         months: '',
         date: '',
+        affectsStock: false,
     })
 
     const [selectedMonth, setSelectedMonth] = useState<Date | null>(new Date())
@@ -39,6 +42,7 @@ export default function CostManagementPage() {
     const [successMsg, setSuccessMsg] = useState('')
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+    const [stockItems, setStockItems] = useState<StockItem[]>([])
 
     const isFormValid =
         form.description.trim() !== '' &&
@@ -52,32 +56,52 @@ export default function CostManagementPage() {
         (
             form.type !== 'Gasto Diferidos' ||
             (Number(form.months || 0) > 0)
-
-
         )
 
     useEffect(() => {
-        const fetchExpenses = async () => {
+        fetchExpenses()
+    }, [selectedMonth])
+    useEffect(() => {
+        fetchStockItems()
+    }, [])
+    useEffect(() => {
+        const fetchStock = async () => {
             try {
-                if (selectedMonth) {
-                    const month = selectedMonth.getMonth() + 1
-                    const year = selectedMonth.getFullYear()
-                    const data = await getExpenses(month, year)
-                    setExpenses(data)
-                } else {
-                    const data = await getExpenses() // sin filtros
-                    setExpenses(data)
-                }
+                const data = await getStockItems()
+                setStockItems(data)
             } catch (error: any) {
-                setErrorMsg(error.message || 'Error al cargar los gastos.')
+                setErrorMsg(error.message || 'Error al cargar el inventario')
             }
         }
 
-        fetchExpenses()
-    }, [selectedMonth])
+        fetchStock()
+    }, [])
 
+    const fetchExpenses = async () => {
+        try {
+            if (selectedMonth) {
+                const month = selectedMonth.getMonth() + 1
+                const year = selectedMonth.getFullYear()
+                const data = await getExpenses(month, year)
+                console.log('Gastos cargados:', data)
 
-
+                setExpenses(data)
+            } else {
+                const data = await getExpenses()
+                setExpenses(data)
+            }
+        } catch (error: any) {
+            setErrorMsg(error.message || 'Error al cargar los gastos.')
+        }
+    }
+    const fetchStockItems = async () => {
+        try {
+            const data = await getStockItems()
+            setStockItems(data)
+        } catch (error: any) {
+            setErrorMsg(error.message || 'Error al cargar el inventario')
+        }
+    }
 
     const handleFormChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
@@ -88,7 +112,6 @@ export default function CostManagementPage() {
                 [name]: value,
             }
 
-            // Si cambia el tipo y no es "Gasto Diferidos", limpiamos el campo de meses
             if (name === 'type' && value !== 'Gasto Diferidos') {
                 updatedForm.months = ''
             }
@@ -108,14 +131,30 @@ export default function CostManagementPage() {
                 date: form.date || new Date().toISOString(),
                 ...(form.type === 'Gasto Diferidos' && {
                     months: parseFloat(form.months),
-                })
+                }),
+                affectsStock: form.affectsStock || false,
             }
-
 
             const saved = await postExpenses(newExpense)
             const inserted = Array.isArray(saved) ? saved : [saved]
 
-            setExpenses((prev) => [...inserted, ...prev])
+            // Verificar si el gasto corresponde al mes seleccionado
+            const matchMonth = (expense: Expense) => {
+                if (!selectedMonth) return true
+                const d = new Date(expense.date)
+                return (
+                    d.getMonth() === selectedMonth.getMonth() &&
+                    d.getFullYear() === selectedMonth.getFullYear()
+                )
+            }
+
+            const visibleExpenses = inserted.filter(matchMonth)
+            setExpenses((prev) => [...visibleExpenses, ...prev])
+
+            // 🚀 ACTUALIZAR STOCK INMEDIATAMENTE
+            const updatedStock = await getStockItems()
+            setStockItems(updatedStock)
+
             setForm({
                 type: 'Gasto Variable',
                 description: '',
@@ -123,17 +162,21 @@ export default function CostManagementPage() {
                 quantity: '',
                 months: '',
                 date: '',
+                affectsStock: false,
             })
+
             setSuccessMsg('Gasto agregado correctamente ✅')
         } catch (error: any) {
             setErrorMsg(error.message || 'Error al guardar el gasto')
         }
     }
 
+
     const handleDelete = async (id: string) => {
         try {
             await deleteExpenses(id)
             await fetchExpenses()
+            await fetchStockItems() // ✅ refrescar inventario también
             setSuccessMsg('Gasto eliminado correctamente ✅')
         } catch (error: any) {
             setErrorMsg(error.message || 'Error al eliminar el gasto')
@@ -141,17 +184,7 @@ export default function CostManagementPage() {
             setConfirmDeleteId(null)
         }
     }
-    const fetchExpenses = async () => {
-        const today = new Date()
-        const currentMonth = today.getMonth() + 1 // enero = 0
-        const currentYear = today.getFullYear()
-        try {
-            const data = await getExpenses(currentMonth, currentYear)
-            setExpenses(data)
-        } catch (error: any) {
-            setErrorMsg(error.message || 'Error al cargar los gastos.')
-        }
-    }
+
 
     const handleEdit = (expense: Expense) => {
         setEditingExpense(expense)
@@ -160,10 +193,9 @@ export default function CostManagementPage() {
             description: expense.description,
             unitCost: String(expense.unitCost),
             quantity: String(expense.quantity),
-            months: String(expense.months),
-
-
+            months: String(expense.months || ''),
             date: expense.date,
+            affectsStock: !!expense.affectsStock,// ✅ toma el valor real
         })
     }
 
@@ -177,12 +209,15 @@ export default function CostManagementPage() {
                 quantity: parseFloat(form.quantity),
                 amount: parseFloat(form.unitCost) * parseFloat(form.quantity),
                 date: form.date,
+                affectsStock: form.affectsStock,
             })
-
 
             setExpenses((prev) =>
                 prev.map((e) => (e._id === updated._id ? updated : e))
             )
+
+            await fetchStockItems() // 🔁 Recarga la tabla de stock
+
             setEditingExpense(null)
             setForm({
                 type: 'Gasto Variable',
@@ -191,12 +226,15 @@ export default function CostManagementPage() {
                 quantity: '',
                 months: '',
                 date: '',
+                affectsStock: false,
             })
+
             setSuccessMsg('Gasto actualizado correctamente ✅')
         } catch (error: any) {
             setErrorMsg(error.message || 'Error al actualizar el gasto')
         }
     }
+
 
     const filteredExpenses = selectedMonth
         ? expenses.filter((e) => {
@@ -232,6 +270,7 @@ export default function CostManagementPage() {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Gastos')
         XLSX.writeFile(workbook, 'Gastos_EnUnaOptica.xlsx')
     }
+
     return (
         <div className="min-h-screen p-4 sm:p-6 lg:p-8 bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors duration-300">
             {successMsg && (
@@ -241,13 +280,11 @@ export default function CostManagementPage() {
                 <FloatingMessage message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
             )}
 
-            {/* Header */}
             <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-primary-700 dark:text-primary-300">
                     Gestión de Costos
                 </h1>
 
-                {/* Filtro y Exportar */}
                 <div className="flex flex-wrap gap-3 items-center">
                     {selectedMonth && (
                         <button
@@ -288,7 +325,6 @@ export default function CostManagementPage() {
                 </div>
             </header>
 
-            {/* Gestión de gastos */}
             <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden transition mb-10">
                 <ExpenseForm
                     form={form}
@@ -296,51 +332,21 @@ export default function CostManagementPage() {
                     onSubmit={editingExpense ? updateExpense : addExpense}
                     isFormValid={isFormValid}
                 />
-
                 <ExpenseTable
                     expenses={filteredExpenses}
                     onEdit={handleEdit}
-                    onDelete={(id) => setConfirmDeleteId(id)}
+                    onDelete={(id) => handleDelete(id)}
                 />
             </div>
 
-            {/* Gestión de stock */}
             <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden transition">
                 <h2 className="text-2xl font-bold px-6 pt-6 pb-2 text-primary-700 dark:text-primary-300">
                     Inventario / Stock
                 </h2>
-
-                <StockForm
-                    form={stockForm}
-                    onChange={handleStockFormChange}
-                    onSubmit={addStockItem}
-                    isFormValid={isStockFormValid}
-                />
-
-                <StockTable
-                    stockItems={stockData}
-                    onEdit={handleStockEdit}
-                    onDelete={(id) => setConfirmDeleteStockId(id)}
-                />
+                <div className="p-4">
+                    <StockTable stockItems={stockItems} />
+                </div>
             </div>
-
-            {/* Confirmación para eliminar stock */}
-            {confirmDeleteId && (
-                <ConfirmMessage
-                    message="¿Seguro que quieres eliminar el gasto?"
-                    onCancel={() => setConfirmDeleteId(null)}
-                    onConfirm={() => handleDelete(confirmDeleteId)}
-                />
-            )}
-
-            {confirmDeleteStockId && (
-                <ConfirmMessage
-                    message="¿Seguro que quieres eliminar este producto del stock?"
-                    onCancel={() => setConfirmDeleteStockId(null)}
-                    onConfirm={() => handleStockDelete(confirmDeleteStockId)}
-                />
-            )}
         </div>
     )
-
 }

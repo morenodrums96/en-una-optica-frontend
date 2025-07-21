@@ -22,6 +22,7 @@ export async function postExpenses(expense: {
     quantity: number
     amount: number
     date: string
+    affectsStock: Boolean
 }) {
     const res = await fetch(`${API_URL}/api/expenses`, {
         method: 'POST',
@@ -40,8 +41,14 @@ export async function deleteExpenses(id: string) {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
     })
-    if (!res.ok) throw new Error('Error al eliminar el gasto.')
-    return await res.json()
+
+    const result = await res.json()
+
+    if (!res.ok) {
+        throw new Error(result.message || 'Error al eliminar el gasto.')
+    }
+
+    return result
 }
 export async function putExpense(id: string, data: {
     type: string
@@ -50,6 +57,7 @@ export async function putExpense(id: string, data: {
     quantity: number
     amount: number
     date: string
+    affectsStock: Boolean
 }) {
     const res = await fetch(`${API_URL}/api/expenses/${id}`, {
         method: 'PUT',
@@ -58,5 +66,16 @@ export async function putExpense(id: string, data: {
         body: JSON.stringify(data),
     })
     if (!res.ok) throw new Error('Error al actualizar el gasto')
+    return await res.json()
+}
+
+export async function getStockItems() {
+
+    const res = await fetch(`${API_URL}/api/stock`, {
+        method: 'GET',
+        credentials: 'include',
+    })
+
+    if (!res.ok) throw new Error('Error al cargar el stock.')
     return await res.json()
 }

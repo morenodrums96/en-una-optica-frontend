@@ -11,4 +11,5 @@ export type Expense = {
   groupId: string
   monthIndex:number
   createdAt?: string
+  affectsStock:Boolean 
 }

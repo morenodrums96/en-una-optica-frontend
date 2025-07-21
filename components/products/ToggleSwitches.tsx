@@ -5,9 +5,8 @@ type Props = {
   formData: {
     frond: boolean
     canModifyQuantity: boolean
-    iva: boolean
   }
-  onToggle: (field: 'frond' | 'canModifyQuantity' | 'iva') => void
+  onToggle: (field: 'frond' | 'canModifyQuantity') => void
 }
 
 export default function ToggleSwitches({ formData, onToggle }: Props) {
@@ -22,11 +21,6 @@ export default function ToggleSwitches({ formData, onToggle }: Props) {
       field: 'canModifyQuantity',
       value: formData.canModifyQuantity,
     },
-    {
-      label: 'Aplicar IVA',
-      field: 'iva',
-      value: formData.iva,
-    },
   ] as const
 
   return (
@@ -37,8 +31,8 @@ export default function ToggleSwitches({ formData, onToggle }: Props) {
           <button
             type="button"
             onClick={() => onToggle(s.field)}
-            className={`w-10 h-6 flex items-center bg-gray-300 rounded-full p-1 transition-colors duration-300 ${
-              s.value ? 'bg-primary-600' : ''
+            className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${
+              s.value ? 'bg-primary-600' : 'bg-gray-300'
             }`}
           >
             <span

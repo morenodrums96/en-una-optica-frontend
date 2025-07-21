@@ -11,15 +11,18 @@ export function useProductForm(isOpen: boolean, defaultData?: any) {
     description: '',
     unitCost: '',
     customerPrice: '',
+    priceWithoutVAT: '',
     supplier: '',
     variants: [{ color: '', quantity: '', image: '', images: [] }],
     frameMaterial: '',
     faceShape: '',
     frameShape: '',
+    discount: '',
+    discountedPriceWithVAT: '',
     configurableOptions: [],
-    frond: false,
-    canModifyQuantity: false,
-    iva: false,
+    frond: true, // ← Ahora inicia como true
+    hasDiscount: true,
+    canModifyQuantity: true, // ← También inicia como true
     size: ''
   })
 
@@ -37,15 +40,18 @@ export function useProductForm(isOpen: boolean, defaultData?: any) {
         description: '',
         unitCost: '',
         customerPrice: '',
+        priceWithoutVAT: '',
         supplier: '',
         variants: [{ color: '', quantity: '', image: '', images: [] }],
         frameMaterial: '',
         faceShape: '',
         frameShape: '',
+        discount: '',
+        discountedPriceWithVAT: '',
         configurableOptions: [],
-        frond: false,
-        canModifyQuantity: false,
-        iva: false,
+        frond: true, // ← aquí también
+        hasDiscount: false,
+        canModifyQuantity: true, // ← aquí también
         size: ''
       })
       setSelectedOptions([])
@@ -102,7 +108,7 @@ export function useProductForm(isOpen: boolean, defaultData?: any) {
     })
   }
 
-  const handleToggle = (field: 'frond' | 'canModifyQuantity' | 'iva') => {
+  const handleToggle = (field: 'frond' | 'canModifyQuantity') => {
     setFormData(prev => ({ ...prev, [field]: !prev[field] }))
   }
 

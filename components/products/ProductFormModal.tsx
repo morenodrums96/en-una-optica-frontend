@@ -42,11 +42,18 @@ export default function ProductFormModal({
     removeVariant,
     validateForm
   } = useProductForm(isOpen, defaultData)
+
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsSubmitting(false)
+    }
+  }, [isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isSubmitting) return // prevención extra
+    if (isSubmitting) return
     if (!validateForm()) return
 
     setIsSubmitting(true)
@@ -88,22 +95,12 @@ export default function ProductFormModal({
       }
 
       onSubmit(productToSend)
-      // No reactivamos el botón si se guarda correctamente (queda bloqueado)
     } catch (err) {
       console.error('Error al guardar:', err)
-      setIsSubmitting(false) // Solo reactivar si falla
+      setIsSubmitting(false)
     }
   }
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsSubmitting(false)
-    }
-  }, [isOpen])
-
-
-
-  if (!isOpen) return null
   const handleVariantGallery = (index: number, files: FileList | null) => {
     if (!files) return
 
@@ -132,8 +129,7 @@ export default function ProductFormModal({
     })
   }
 
-
-
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -196,7 +192,15 @@ export default function ProductFormModal({
 
           <div className="p-5 bg-white dark:bg-primary-900 rounded-xl border border-primary-200 dark:border-primary-700 shadow-md hover:shadow-lg transition-shadow duration-300 space-y-4">
             <h3 className="text-sm font-medium mb-2 text-primary-800 dark:text-white">Opciones configurables</h3>
-            <ToggleSwitches formData={formData} onToggle={handleToggle} />
+            <ToggleSwitches
+              formData={formData}
+              onToggle={(field) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  [field]: !prev[field],
+                }))
+              }}
+            />
           </div>
 
           <div className="flex justify-end gap-2 mt-6">

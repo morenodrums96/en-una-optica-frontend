@@ -108,13 +108,13 @@ export default function ExpenseTable({ expenses, onEdit, onDelete }: Props) {
         {expenses.length > 0 && (
           <tfoot className="bg-primary-100 dark:bg-neutral-900 text-primary-800 dark:text-primary-100 border-t border-neutral-300 dark:border-neutral-700">
             <tr>
-              <td className="px-6 py-4 font-bold" colSpan={5}>
+              <td className="px-6 py-4 font-bold" colSpan={4}>
                 Total
               </td>
-              <td className="px-6 py-4 text-right font-bold text-green-800 dark:text-green-300">
+              <td className="px-5 py-4 text-right font-bold text-green-800 dark:text-green-300">
                 ${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </td>
-              <td colSpan={3}></td>
+              <td colSpan={4}></td>
             </tr>
           </tfoot>
         )}

@@ -24,15 +24,18 @@ export type ProductFormData = {
   description: string
   unitCost: string
   customerPrice: string
+  priceWithoutVAT: string
   supplier: string
   variants: VariantType[]
   frameMaterial: string
   faceShape: string
   frameShape: string
+  discount: string
+  discountedPriceWithVAT: string
   configurableOptions: string[]
   frond: boolean
+  hasDiscount:boolean
   canModifyQuantity: boolean
-  iva: boolean
   size: string
-  
+
 }
