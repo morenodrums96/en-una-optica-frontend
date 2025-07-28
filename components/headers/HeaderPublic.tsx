@@ -6,7 +6,9 @@ import { ShoppingCartIcon, UserIcon, Bars3Icon, XMarkIcon } from '@heroicons/rea
 import { Truck } from 'lucide-react'
 import Image from 'next/image'
 import logoLends from '@/components/icons/logoLends.svg'
-import { useWishlist } from '@/hooks/useWishlist'
+import logoLends600 from '@/components/icons/logoLends600.svg'
+
+import { useWishlist } from '@/context/WishlistContext'
 import { useCart } from '@/context/CartContext'
 import { useAuthSlider } from '@/context/AuthSliderContext'
 
@@ -44,7 +46,7 @@ export default function HeaderPublic({ animated = true }: Props) {
             : 'bg-transparent border-b border-gray-300 px-6 max-w-[100vw]'}
         `}
       >
-        <div className="flex items-center justify-between w-full max-w-8xl-mid mx-auto animate-slide-down">
+        <div className="flex items-center justify-between w-full max-w-8xl-mid mx-auto animate-slide-down ">
           {/* Logo */}
           <Link href="/">
             <span className="font-[Inkcorrode] text-3xl sm:text-4xl tracking-wide text-primary-900">
@@ -64,19 +66,26 @@ export default function HeaderPublic({ animated = true }: Props) {
             <Link href="#contacto">Contacto</Link>
           </nav>
 
-          {/* Íconos */}
-          <div className="flex items-center space-x-4 text-primary-800">
-            {/* Wishlist */}
-            <Link href="/wishlist" className="relative group">
+          <div className="flex items-center space-x-4 text-primary-800 ">
+            <Link href="/wishlist" className="relative group w-10 h-10">
               <Image
                 src={logoLends}
                 alt="Me gusta"
-                width={50}
-                height={50}
-                className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+                fill
+                className="object-contain opacity-100 scale-100 group-hover:opacity-0 group-hover:scale-110 transition-all duration-300 ease-in-out"
               />
+              <Image
+                src={logoLends600}
+                alt="Me gusta hover"
+                fill
+                className="object-contain opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 ease-in-out"
+              />
+
               {wishlist.length > 0 && (
-                <span className="absolute bg-primary-400 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold shadow" style={{ top: '0px', left: '33px' }}>
+                <span
+                  className="absolute bg-primary-400 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold shadow"
+                  style={{ top: '0px', left: '33px' }}
+                >
                   {wishlist.length}
                 </span>
               )}
@@ -84,7 +93,7 @@ export default function HeaderPublic({ animated = true }: Props) {
 
             {/* Carrito */}
             <Link href="/car" className="relative hover:text-primary-600">
-              <ShoppingCartIcon className="w-7 h-7 transition-transform hover:scale-110" />
+              <ShoppingCartIcon className="w-7 h-7 transition-transform hover:scale-110 " />
               {cartItems.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-primary-400 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold shadow">
                   {cartItems.length}

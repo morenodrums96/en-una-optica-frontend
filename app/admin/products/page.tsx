@@ -52,7 +52,6 @@ export default function ProductosPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [confirmDeleteName, setConfirmDeleteName] = useState<string | null>(null)
 
-  // ⬇️ Asegúrate de declarar filters antes de usarse en fetchProducts
   const [filters, setFilters] = useState({
     name: '',
     minPrice: '',
@@ -62,17 +61,11 @@ export default function ProductosPage() {
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     if (filters[name as keyof typeof filters] !== value) {
+      setFilters(prev => ({ ...prev, [name]: value }))
       setProducts([])
       setPage(1)
-      setFilters(prev => ({ ...prev, [name]: value }))
     }
   }
-
-  // 🔁 Reiniciar productos al cambiar filtros
-  useEffect(() => {
-    setProducts([])
-    setPage(1)
-  }, [filters])
 
   const observer = useRef<IntersectionObserver | null>(null)
 
@@ -96,8 +89,9 @@ export default function ProductosPage() {
     setLoading(true)
     try {
       const { products: newProducts, total } = await getAllProductsByPages(page, 10, filters)
-      setProducts(prev => [...prev, ...newProducts])
-      setHasMore((products.length + newProducts.length) < total)
+      setProducts(page === 1 ? newProducts : prev => [...prev, ...newProducts])
+      setHasMore((page === 1 ? newProducts.length : products.length + newProducts.length) < total)
+
     } catch (error) {
       setErrorMsg('Error al cargar productos:' + error)
     } finally {
@@ -109,6 +103,11 @@ export default function ProductosPage() {
     fetchProducts()
   }, [filters, page])
 
+  useEffect(() => {
+    return () => {
+      if (observer.current) observer.current.disconnect()
+    }
+  }, [])
 
   const loadCatalogs = async () => {
     try {
@@ -143,8 +142,12 @@ export default function ProductosPage() {
 
       setShowModal(false)
       setSelectedProduct(null)
+      setPage(1)
       setProducts([])
-      setPage(1) // reiniciar lista
+
+      setTimeout(() => {
+        fetchProducts()
+      }, 0)
     } catch (error: any) {
       setErrorMsg('Error: ' + error.message)
     }
@@ -161,10 +164,19 @@ export default function ProductosPage() {
     }
   }
 
-
   useEffect(() => {
     if (showModal) loadCatalogs()
   }, [showModal])
+
+  useEffect(() => {
+    if (successMsg || errorMsg) {
+      const timer = setTimeout(() => {
+        setSuccessMsg('')
+        setErrorMsg('')
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMsg, errorMsg])
 
   return (
     <main className="flex-1 p-6 ml-13 bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-primary-950 dark:to-primary-900 transition-colors duration-300 min-h-screen">

@@ -1,44 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useWishlist } from '@/hooks/useWishlist'
-import { getProductsByIds } from '@/lib/productsApis/productApis'
-import Image from 'next/image'
+import { useWishlistProducts } from '@/hooks/useWishlistProducts'
+import { useWishlist } from '@/context/WishlistContext'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import logoLends from '@/components/icons/logoLends.svg'
-
-interface Product {
-  _id: string
-  name: string
-  customerPrice: number
-  variants?: { image: string }[]
-}
+import logoLendsRed from '@/components/icons/logoLendsRed.svg'
 
 export default function WishlistPage() {
-  const { wishlist } = useWishlist()
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [anonymousId, setAnonymousId] = useState<string | null>(null)
   const router = useRouter()
+  const { toggleWishlist, isInWishlist } = useWishlist()
 
   useEffect(() => {
-    const fetchWishlistProducts = async () => {
-      try {
-        if (wishlist.length === 0) {
-          setProducts([])
-          return
-        }
+    const id = localStorage.getItem('anonymousUserId')
+    if (id) setAnonymousId(id)
+  }, [])
 
-        const response = await getProductsByIds(wishlist)
-        setProducts(response.products || [])
-      } catch (error) {
-        console.error('Error al cargar wishlist:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchWishlistProducts()
-  }, [wishlist])
+  const { data: products, isLoading } = useWishlistProducts(anonymousId)
 
   const handleProductClick = (productId: string) => {
     localStorage.setItem('selectedProductId', productId)
@@ -57,31 +37,42 @@ export default function WishlistPage() {
           </p>
         </div>
 
-        {loading ? (
+        {!anonymousId || isLoading ? (
           <p className="text-center text-primary-600">Cargando productos...</p>
-        ) : products.length === 0 ? (
+        ) : !products || products.length === 0 ? (
           <p className="text-center text-primary-600">No tienes productos en tu lista de deseos.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {products.map((product) => (
               <div
                 key={product._id}
-                onClick={() => handleProductClick(product._id)}
                 className="card-hover-animated cursor-pointer relative overflow-hidden rounded-3xl bg-white
                 flex-shrink-0 w-[260px] h-[340px] p-4 shadow-xl hover:shadow-2xl border border-primary-100"
               >
-                {/* ❤️ Ícono de me gusta */}
-                <div className="absolute top-2 right-1 z-20">
-                  <Image
-                    src={logoLends}
-                    alt="Favorito"
-                    width={30}
-                    height={30}
-                    className="w-6 h-6 object-contain"
-                  />
+                {/* Botón Me gusta */}
+                <div className="absolute top-2 right-2 z-20">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleWishlist(product._id)
+                    }}
+                    className="p-1 rounded-full bg-white shadow-md transition-transform hover:scale-90"
+                  >
+                    <Image
+                      src={isInWishlist(product._id) ? logoLendsRed : logoLends}
+                      alt="Favorito"
+                      width={30}
+                      height={30}
+                      className="w-6 h-6 object-contain"
+                    />
+                  </button>
                 </div>
 
-                <div className="h-[200px] w-full bg-white flex items-center justify-center">
+                {/* Imagen */}
+                <div
+                  onClick={() => handleProductClick(product._id)}
+                  className="h-[200px] w-full bg-white flex items-center justify-center"
+                >
                   <Image
                     src={product.variants?.[0]?.image || '/images/placeholder-product.png'}
                     alt={product.name}

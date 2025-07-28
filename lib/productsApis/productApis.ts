@@ -4,6 +4,18 @@ type CustomerPriceResponse = {
   customerPrice: number
   priceWithoutVAT: number
 }
+interface Product {
+  _id: string
+  name: string
+  category: string
+  customerPrice: number
+  unitCost?: number
+  variants?: { image: string }[]
+}
+
+interface ProductsResponse {
+  products: Product[]
+}
 export async function getCatalogByGroup() {
   try {
     const res = await fetch(`${API_URL}/api/allCatalogs`, {
@@ -159,7 +171,7 @@ export async function bestSellers() {
   }
 }
 
-export async function productsByFiler(page = 1, limit = 10) {
+export async function productsByFiler(page = 1, limit = 10): Promise<ProductsResponse> {
   try {
     const res = await fetch(`${API_URL}/api/products/byFilter?page=${page}&limit=${limit}`, {
       method: 'GET',
@@ -206,16 +218,21 @@ export const cleanupTempImages = async (urls: string[]) => {
 }
 
 export async function getAllProductsByPages(page = 1, limit = 10, filters = {}) {
+  const cleanFilters = Object.fromEntries(
+    Object.entries(filters).filter(([_, val]) => val !== '')
+  )
+
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
-    ...Object.fromEntries(Object.entries(filters).map(([key, val]) => [key, String(val)]))
+    ...Object.fromEntries(Object.entries(cleanFilters).map(([key, val]) => [key, String(val)])),
   })
 
   const res = await fetch(`${API_URL}/api/products/byPages?${params}`)
   if (!res.ok) throw new Error('Error al cargar los productos')
   return await res.json()
 }
+
 
 export async function putExpense(id: string, data: {
   type: string

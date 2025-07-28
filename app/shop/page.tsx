@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { getProductSelected } from '@/lib/productsApis/productApis'
-import { useWishlist } from '@/hooks/useWishlist'
+import { useWishlist } from '@/context/WishlistContext'
 import logoLends from '@/components/icons/logoLends.svg'
-import logoLendsBlue from '@/components/icons/logoLendsBlue.svg'
+import logoLendsRed from '@/components/icons/logoLendsRed.svg'
 import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
+import { toast } from 'sonner'
 
 
 export default function ShopPage() {
@@ -131,7 +132,7 @@ export default function ShopPage() {
                     aria-label="Agregar a favoritos"
                 >
                     <Image
-                        src={isInWishlist(product._id) ? logoLendsBlue : logoLends}
+                        src={isInWishlist(product._id) ? logoLendsRed : logoLends}
                         alt="Me gusta"
                         width={30}
                         height={30}
@@ -220,15 +221,7 @@ export default function ShopPage() {
                     </div>
                 )}
 
-                {/* PRODUCT DETAILS AND CONFIGURABLE OPTIONS - Right Column */}
-                <div className="w-full md:w-5/12"> {/* Adjusted width for options */}
-                    {/* Product Name (Optional, as it's at the top, but could be repeated here) */}
-                    {/* <h2 className="text-3xl font-bold text-gray-800 mb-4">{product.name}</h2> */}
-
-                    {/* Example of fixed price or initial price if needed */}
-                    {/* <p className="text-3xl font-bold text-primary-700 mb-6">${product.basePrice?.toLocaleString('es-MX') || 'N/A'}</p> */}
-
-                    {/* Description below price, if applicable */}
+                <div className="w-full md:w-5/12">
                     {product.description && (
                         <div className="mb-6 text-gray-700 leading-relaxed">
                             <h3 className="text-xl font-semibold mb-2">Descripción:</h3>
@@ -330,16 +323,17 @@ export default function ShopPage() {
                                     .reduce((acc, opt: any) => acc + opt.price * (opt.quantity || 1), 0)
 
                                 addToCart({
-                                    _id: product._id,
+                                    productId: product._id,
                                     name: product.name,
                                     customerPrice: product.customerPrice,
                                     variantImage: product.variants?.[0]?.images?.[0] || '/images/placeholder.png',
                                     selectedOptions,
+                                    quantity: 1,
                                 })
 
-
-                                alert('¡Producto añadido al carrito!')
+                                toast.success('¡Producto añadido al carrito!')
                             }}
+
                         >
                             Añadir al Carrito
                         </button>
