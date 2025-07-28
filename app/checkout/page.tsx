@@ -1,17 +1,39 @@
 'use client'
 
 import { useCart } from '@/context/CartContext'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { CheckCircle } from 'lucide-react'
+import CardDetails from '@/components/CardDetails/CardDetails'
+
+const Input = ({ label, name, value, onChange, required = false, type = 'text', className = '' }: any) => {
+  const isValid = value && value.trim().length > 0
+  return (
+    <div className="relative w-full">
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        placeholder={label}
+        className={`w-full p-3 rounded-md border ${isValid ? 'border-primary-600' : 'border-primary-950'} focus:outline-none focus:ring-2 focus:ring-primary-500 text-primary-900 placeholder-primary-800 ${className}`}
+      />
+      {isValid && (
+        <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary-600" size={20} />
+      )}
+    </div>
+  )
+}
 
 export default function CheckoutPage() {
   const { cartItems, totalPrice, clearCart } = useCart()
   const router = useRouter()
+  const [cardDataValid, setCardDataValid] = useState(false)
 
   const [form, setForm] = useState({
     name: '',
-    secondName: '',
-    secondLastName: '',
+    lastName: '',
     street: '',
     externalNumber: '',
     internalNumber: '',
@@ -22,119 +44,123 @@ export default function CheckoutPage() {
     aditionalReferents: '',
     phone: '',
     email: '',
+    subscribe: false,
   })
+
+  const isFormValid = () => {
+    return (
+      form.name.trim() &&
+      form.lastName.trim() &&
+      form.street.trim() &&
+      form.internalNumber.trim() &&
+      form.postalCode.trim() &&
+      form.state.trim() &&
+      form.city.trim() &&
+      form.neighborhood.trim() &&
+      form.phone.trim() &&
+      form.email.trim()
+    )
+  }
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Refs para tarjeta
   const cardNumberRef = useRef<HTMLInputElement>(null)
   const cardNameRef = useRef<HTMLInputElement>(null)
-  const expMonthRef = useRef<HTMLInputElement>(null)
-  const expYearRef = useRef<HTMLInputElement>(null)
   const cvvRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).OpenPay) {
-      const OpenPay = (window as any).OpenPay
-      OpenPay.setId('YOUR_OPENPAY_ID')
-      OpenPay.setApiKey('YOUR_PUBLIC_API_KEY')
-      OpenPay.setSandboxMode(true)
-    }
-  }, [])
+  const expDateRef = useRef<HTMLInputElement>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value, type, checked } = e.target
+    setForm({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value,
+    })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const OpenPay = (window as any).OpenPay
-
-    const cardData = {
-      holder_name: cardNameRef.current?.value,
-      card_number: cardNumberRef.current?.value,
-      expiration_month: expMonthRef.current?.value,
-      expiration_year: expYearRef.current?.value,
-      cvv2: cvvRef.current?.value,
-    }
-
-    OpenPay.token.create(cardData, onSuccess, onError)
-  }
-
-  const onSuccess = async (response: any) => {
-    const tokenId = response.data.id
-    console.log('TOKEN ID:', tokenId)
-
     try {
+      const anonymousId = localStorage.getItem('anonymousId')
+
       const res = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ form, cartItems, totalPrice, tokenId }),
+        body: JSON.stringify({
+          customerData: form,
+          cartItems,
+          totalPrice,
+          anonymousId,
+        }),
       })
 
       const data = await res.json()
-
-      if (!data.success) {
-        throw new Error(data.message || 'Fallo al guardar orden')
-      }
+      if (!data.success) throw new Error(data.message || 'No se pudo guardar la orden.')
 
       clearCart()
-      alert('¡Pago exitoso! Redirigiendo...')
-      router.push('/')
+      router.push('/checkout/success')
     } catch (err: any) {
-      console.error(err)
-      setError(err.message || 'Error inesperado')
+      setError(err.message || 'Ocurrió un error inesperado.')
     } finally {
       setLoading(false)
     }
   }
 
-  const onError = (error: any) => {
-    console.error('OpenPay error:', error)
-    setError(error.data?.description || 'Error al procesar la tarjeta')
-    setLoading(false)
-  }
-
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">Información de Envío y Pago</h1>
+    <div className="max-w-5xl mx-auto py-12 px-4">
+      <h1 className="text-3xl font-bold text-primary-800 mb-8 text-center">Checkout</h1>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-lg shadow-md">
-
-        {/* Datos de envío */}
-        <input name="name" value={form.name} onChange={handleChange} placeholder="Nombre(s)" className="input" required />
-        <input name="secondName" value={form.secondName} onChange={handleChange} placeholder="Segundo Nombre" className="input" />
-        <input name="secondLastName" value={form.secondLastName} onChange={handleChange} placeholder="Segundo Apellido" className="input" />
-        <input name="street" value={form.street} onChange={handleChange} placeholder="Calle" className="input" required />
-        <input name="externalNumber" value={form.externalNumber} onChange={handleChange} placeholder="Número Exterior" className="input" required />
-        <input name="internalNumber" value={form.internalNumber} onChange={handleChange} placeholder="Número Interior (opcional)" className="input" />
-        <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Código Postal" className="input" required />
-        <input name="neighborhood" value={form.neighborhood} onChange={handleChange} placeholder="Colonia" className="input" required />
-        <input name="city" value={form.city} onChange={handleChange} placeholder="Ciudad" className="input" required />
-        <input name="state" value={form.state} onChange={handleChange} placeholder="Estado" className="input" required />
-        <input name="aditionalReferents" value={form.aditionalReferents} onChange={handleChange} placeholder="Referencias adicionales" className="input" />
-        <input name="phone" value={form.phone} onChange={handleChange} placeholder="Teléfono" className="input" required />
-        <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Correo electrónico" className="input" required />
-
-        {/* Tarjeta */}
-        <input ref={cardNameRef} placeholder="Nombre en la tarjeta" className="input" required />
-        <input ref={cardNumberRef} placeholder="Número de tarjeta" className="input" required />
-        <input ref={expMonthRef} placeholder="Mes de expiración (MM)" className="input" required />
-        <input ref={expYearRef} placeholder="Año de expiración (YY)" className="input" required />
-        <input ref={cvvRef} placeholder="CVV" className="input" required />
-
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-lg shadow">
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Input name="name" label="Nombre(s)" value={form.name} onChange={handleChange} required />
+          <Input name="lastName" label="Apellidos" value={form.lastName} onChange={handleChange} required />
+          <Input name="street" label="Calle" value={form.street} onChange={handleChange} required />
+          <Input name="internalNumber" label="Número interior" value={form.internalNumber} onChange={handleChange} required />
+          <Input name="externalNumber" label="Número exterior" value={form.externalNumber} onChange={handleChange} />
+          <Input name="postalCode" label="C.P." value={form.postalCode} onChange={handleChange} required />
+          <Input name="state" label="Estado" value={form.state} onChange={handleChange} required />
+          <Input name="city" label="Ciudad" value={form.city} onChange={handleChange} required />
+          <Input name="neighborhood" label="Colonia" value={form.neighborhood} onChange={handleChange} required />
+          <Input name="aditionalReferents" label="Referencias adicionales" value={form.aditionalReferents} onChange={handleChange} maxLength={300} />
+          <Input name="phone" label="Teléfono" value={form.phone} onChange={handleChange} required />
+          <Input name="email" type="email" label="Correo electrónico" value={form.email} onChange={handleChange} required />
+          <label className="col-span-2 flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="subscribe"
+              checked={form.subscribe}
+              onChange={handleChange}
+              className="accent-primary-200"
+            />
+            Quiero recibir noticias y ofertas exclusivas.
+          </label>
+        </div>
+    {
+        // <CardDetails
+        //   cardNameRef={cardNameRef}
+        //   cardNumberRef={cardNumberRef}
+        //   expDateRef={expDateRef}
+        //   cvvRef={cvvRef}
+        //   onValidationChange={setCardDataValid}
+        // />
+    }
         <div className="md:col-span-2 flex justify-between items-center mt-4">
-          <p className="text-lg font-semibold text-gray-700">Total a pagar: ${totalPrice.toLocaleString('es-MX')}</p>
-          <button type="submit" disabled={loading} className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow">
+          <p className="text-lg font-bold text-primary-900">
+            Total a pagar: ${totalPrice.toLocaleString('es-MX')}
+          </p>
+          <button
+            type="submit"
+            disabled={loading || !isFormValid() || !cardDataValid}
+            className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg"
+          >
             {loading ? 'Procesando...' : 'Pagar'}
           </button>
         </div>
 
-        {error && <p className="md:col-span-2 text-red-500 mt-2 text-center">{error}</p>}
+        {error && <p className="md:col-span-2 text-red-500 text-center mt-2">{error}</p>}
       </form>
     </div>
   )
