@@ -1,47 +1,42 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getOpenPayToken } from '@/lib/checkoutApis/checkout'
+import { useEffect, useState, MutableRefObject } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 
-interface CardDetailsProps {
-  onTokenReady: (data: { tokenId: string; deviceSessionId: string } | null) => void
+type CardForm = {
+  cardName: string
+  cardNumber: string
+  expDate: string
+  cvv: string
 }
 
-const CardDetails = ({ onTokenReady }: CardDetailsProps) => {
-  const [form, setForm] = useState({
+interface CardDetailsProps {
+  getCardDataRef: MutableRefObject<() => CardForm | null>
+  isCardValidRef: MutableRefObject<() => boolean>
+}
+
+const CardDetails = ({ getCardDataRef, isCardValidRef }: CardDetailsProps) => {
+  const [form, setForm] = useState<CardForm>({
     cardName: '',
     cardNumber: '',
     expDate: '',
-    cvv: ''
+    cvv: '',
   })
 
   const [valid, setValid] = useState({
     cardName: false,
     cardNumber: false,
     expDate: false,
-    cvv: false
+    cvv: false,
   })
 
   useEffect(() => {
-    const allValid = Object.values(valid).every(Boolean)
-    if (allValid) {
-      const [month, year] = form.expDate.split('/')
-      getOpenPayToken({
-        card_number: form.cardNumber.replace(/\s/g, ''),
-        holder_name: form.cardName,
-        expiration_month: month,
-        expiration_year: year,
-        cvv2: form.cvv
-      })
-        .then(onTokenReady)
-        .catch(() => onTokenReady(null))
-    } else {
-      onTokenReady(null)
-    }
-  }, [valid])
+    getCardDataRef.current = () => form
+    isCardValidRef.current = () =>
+      valid.cardName && valid.cardNumber && valid.expDate && valid.cvv
+  }, [form, valid, getCardDataRef, isCardValidRef])
 
-  const handleChange = (name: keyof typeof form, rawValue: string) => {
+  const handleChange = (name: keyof CardForm, rawValue: string) => {
     let value = rawValue
 
     if (name === 'cardNumber') {
@@ -57,7 +52,7 @@ const CardDetails = ({ onTokenReady }: CardDetailsProps) => {
     validate(name, value)
   }
 
-  const validate = (name: keyof typeof valid, value: string) => {
+  const validate = (name: keyof CardForm, value: string) => {
     let isValid = false
 
     switch (name) {
@@ -79,7 +74,7 @@ const CardDetails = ({ onTokenReady }: CardDetailsProps) => {
     setValid(prev => ({ ...prev, [name]: isValid }))
   }
 
-  const renderInput = (label: string, name: keyof typeof form, type = 'text') => {
+  const renderInput = (label: string, name: keyof CardForm, type = 'text') => {
     const value = form[name]
     const isValid = valid[name]
 

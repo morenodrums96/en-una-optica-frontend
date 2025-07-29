@@ -5,6 +5,14 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle } from 'lucide-react'
 import CardDetails from '@/components/CardDetails/CardDetails'
+import { getOpenPayToken } from '@/lib/checkoutApis/checkout'
+
+type CardForm = {
+  cardName: string
+  cardNumber: string
+  expDate: string
+  cvv: string
+}
 
 const Input = ({ label, name, value, onChange, required = false, type = 'text', className = '' }: any) => {
   const isValid = value && value.trim().length > 0
@@ -17,7 +25,8 @@ const Input = ({ label, name, value, onChange, required = false, type = 'text', 
         onChange={onChange}
         required={required}
         placeholder={label}
-        className={`w-full p-3 rounded-md border ${isValid ? 'border-primary-600' : 'border-primary-950'} focus:outline-none focus:ring-2 focus:ring-primary-500 text-primary-900 placeholder-primary-800 ${className}`}
+        className={`w-full p-3 rounded-md border ${isValid ? 'border-primary-600' : 'border-primary-950'
+          } focus:outline-none focus:ring-2 focus:ring-primary-500 text-primary-900 placeholder-primary-800 ${className}`}
       />
       {isValid && (
         <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary-600" size={20} />
@@ -27,9 +36,11 @@ const Input = ({ label, name, value, onChange, required = false, type = 'text', 
 }
 
 export default function CheckoutPage() {
+  const getCardDataRef = useRef<() => CardForm | null>(() => null)
+  const isCardValidRef = useRef<() => boolean>(() => false)
+
   const { cartItems, totalPrice, clearCart } = useCart()
   const router = useRouter()
-  const [cardDataValid, setCardDataValid] = useState(false)
 
   const [form, setForm] = useState({
     name: '',
@@ -65,11 +76,6 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const cardNumberRef = useRef<HTMLInputElement>(null)
-  const cardNameRef = useRef<HTMLInputElement>(null)
-  const cvvRef = useRef<HTMLInputElement>(null)
-  const expDateRef = useRef<HTMLInputElement>(null)
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
     setForm({
@@ -84,30 +90,46 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
-      const anonymousId = localStorage.getItem('anonymousId')
+      const cardIsValid = isCardValidRef.current?.()
+      const cardData = getCardDataRef.current?.()
 
-      const res = await fetch('/api/orders/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerData: form,
-          cartItems,
-          totalPrice,
-          anonymousId,
-        }),
-      })
+      if (!cardIsValid || !cardData) {
+        setError('Por favor completa los datos de la tarjeta correctamente.')
+        setLoading(false)
+        return
+      }
 
-      const data = await res.json()
-      if (!data.success) throw new Error(data.message || 'No se pudo guardar la orden.')
+      let anonymousId = localStorage.getItem('anonymousUserId')
+      if (!anonymousId) {
+        setError('No se encontró el identificador de sesión.')
+        setLoading(false)
+        return
+      }
 
-      clearCart()
-      router.push('/checkout/success')
+      const [expMonth, expYear] = cardData.expDate.split('/')
+
+      const formattedCardData = {
+        card_number: cardData.cardNumber.replace(/\s/g, ''),
+        holder_name: cardData.cardName,
+        expiration_month: expMonth,
+        expiration_year: `20${expYear}`,
+        cvv2: cardData.cvv,
+      }
+
+      const { tokenId } = await getOpenPayToken(formattedCardData)
+
+      console.log('✅ Token generado correctamente:', tokenId)
+
+      // Aquí continuarás luego con la API del backend para cliente + cargo
+
     } catch (err: any) {
-      setError(err.message || 'Ocurrió un error inesperado.')
+      console.error('❌ Error al generar token:', err)
+      setError(err.message || 'Error desconocido al generar el token')
     } finally {
       setLoading(false)
     }
   }
+
 
   return (
     <div className="max-w-5xl mx-auto py-12 px-4">
@@ -138,22 +160,19 @@ export default function CheckoutPage() {
             Quiero recibir noticias y ofertas exclusivas.
           </label>
         </div>
-    {
-        // <CardDetails
-        //   cardNameRef={cardNameRef}
-        //   cardNumberRef={cardNumberRef}
-        //   expDateRef={expDateRef}
-        //   cvvRef={cvvRef}
-        //   onValidationChange={setCardDataValid}
-        // />
-    }
+
+        <CardDetails
+          getCardDataRef={getCardDataRef}
+          isCardValidRef={isCardValidRef}
+        />
+
         <div className="md:col-span-2 flex justify-between items-center mt-4">
           <p className="text-lg font-bold text-primary-900">
             Total a pagar: ${totalPrice.toLocaleString('es-MX')}
           </p>
           <button
             type="submit"
-            disabled={loading || !isFormValid() || !cardDataValid}
+            disabled={loading}
             className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg"
           >
             {loading ? 'Procesando...' : 'Pagar'}
