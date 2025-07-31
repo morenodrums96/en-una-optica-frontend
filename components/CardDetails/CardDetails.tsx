@@ -1,112 +1,142 @@
 'use client'
+import { useEffect, useRef } from 'react'
 
-import { useEffect, useState, MutableRefObject } from 'react'
-import { CheckCircle, XCircle } from 'lucide-react'
-
-type CardForm = {
-  cardName: string
-  cardNumber: string
-  expDate: string
-  cvv: string
+interface Props {
+  getCardDataRef: React.MutableRefObject<() => any>
+  isCardValidRef: React.MutableRefObject<() => boolean>
 }
 
-interface CardDetailsProps {
-  getCardDataRef: MutableRefObject<() => CardForm | null>
-  isCardValidRef: MutableRefObject<() => boolean>
-}
-
-const CardDetails = ({ getCardDataRef, isCardValidRef }: CardDetailsProps) => {
-  const [form, setForm] = useState<CardForm>({
-    cardName: '',
-    cardNumber: '',
-    expDate: '',
-    cvv: '',
-  })
-
-  const [valid, setValid] = useState({
-    cardName: false,
-    cardNumber: false,
-    expDate: false,
-    cvv: false,
-  })
+export default function CardDetails({ getCardDataRef, isCardValidRef }: Props) {
+  const formRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    getCardDataRef.current = () => form
-    isCardValidRef.current = () =>
-      valid.cardName && valid.cardNumber && valid.expDate && valid.cvv
-  }, [form, valid, getCardDataRef, isCardValidRef])
+    const openpayScript = document.createElement('script')
+    openpayScript.src = 'https://openpay.s3.amazonaws.com/openpay.v1.min.js'
+    openpayScript.async = true
 
-  const handleChange = (name: keyof CardForm, rawValue: string) => {
-    let value = rawValue
+    const dataScript = document.createElement('script')
+    dataScript.src = 'https://openpay.s3.amazonaws.com/openpay-data.v1.min.js'
+    dataScript.async = true
 
-    if (name === 'cardNumber') {
-      value = value.replace(/[^\d]/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
+    let loadedScripts = 0
+
+    const handleScriptLoaded = () => {
+      loadedScripts++
+      if (loadedScripts === 2) {
+        // Ambos scripts están listos
+        // @ts-ignore
+        window.OpenPay.setId('mcxajuikhqhwoftq660v')
+        // @ts-ignore
+        window.OpenPay.setApiKey('pk_951afaac262d495881dd39eddf2bdcb1')
+        // @ts-ignore
+        window.OpenPay.setSandboxMode(true)
+        // @ts-ignore
+        window.OpenPay.deviceData.setup('card-form', 'deviceIdHiddenFieldName')
+      }
     }
 
-    if (name === 'expDate') {
-      value = value.replace(/[^\d]/g, '').slice(0, 4)
-      if (value.length >= 3) value = `${value.slice(0, 2)}/${value.slice(2)}`
+    openpayScript.onload = handleScriptLoaded
+    dataScript.onload = handleScriptLoaded
+
+    document.body.appendChild(openpayScript)
+    document.body.appendChild(dataScript)
+  }, [])
+
+  // Exponer datos para el token
+  getCardDataRef.current = () => {
+    const container = formRef.current
+    if (!container) return null
+
+    const getValue = (selector: string) =>
+      container.querySelector<HTMLInputElement>(selector)?.value.trim() || ''
+
+    const cardNumber = getValue('[data-openpay-card="card_number"]')
+    const cardName = getValue('[data-openpay-card="holder_name"]')
+    const expMonth = getValue('[data-openpay-card="expiration_month"]')
+    const expYear = getValue('[data-openpay-card="expiration_year"]')
+    const cvv = getValue('[data-openpay-card="cvv2"]')
+
+    if (!cardNumber || !cardName || !expMonth || !expYear || !cvv) {
+      return null
     }
 
-    setForm(prev => ({ ...prev, [name]: value }))
-    validate(name, value)
+    return {
+      cardNumber,
+      cardName,
+      expDate: `${expMonth}/${expYear}`,
+      cvv,
+    }
   }
 
-  const validate = (name: keyof CardForm, value: string) => {
-    let isValid = false
+  isCardValidRef.current = () => {
+    const container = formRef.current
+    if (!container) return false
 
-    switch (name) {
-      case 'cardName':
-        isValid = value.trim().length > 0
-        break
-      case 'cardNumber':
-        isValid = /^\d{16}$/.test(value.replace(/\s/g, ''))
-        break
-      case 'expDate':
-        const [month, year] = value.split('/')
-        isValid = /^\d{2}\/\d{2}$/.test(value) && Number(month) >= 1 && Number(month) <= 12 && Number(year) >= 24
-        break
-      case 'cvv':
-        isValid = /^\d{3,4}$/.test(value)
-        break
-    }
+    const requiredFields = [
+      '[data-openpay-card="card_number"]',
+      '[data-openpay-card="holder_name"]',
+      '[data-openpay-card="expiration_month"]',
+      '[data-openpay-card="expiration_year"]',
+      '[data-openpay-card="cvv2"]',
+    ]
 
-    setValid(prev => ({ ...prev, [name]: isValid }))
-  }
-
-  const renderInput = (label: string, name: keyof CardForm, type = 'text') => {
-    const value = form[name]
-    const isValid = valid[name]
-
-    return (
-      <div className="relative w-full">
-        <input
-          value={value}
-          placeholder={label}
-          type={type}
-          onChange={(e) => handleChange(name, e.target.value)}
-          className={`w-full p-3 rounded-md border ${isValid ? 'border-primary-600' : 'border-red-500'} focus:outline-none focus:ring-2 ${isValid ? 'focus:ring-primary-500' : 'focus:ring-red-500'} text-primary-900 placeholder-primary-800`}
-        />
-        {isValid ? (
-          <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary-600" size={20} />
-        ) : (
-          <XCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500" size={20} />
-        )}
-      </div>
-    )
+    return requiredFields.every((selector) => {
+      const input = container.querySelector<HTMLInputElement>(selector)
+      return input?.value.trim().length
+    })
   }
 
   return (
-    <div className="md:col-span-2 mt-8">
-      <h2 className="text-xl font-semibold text-primary-800 mb-4">Datos de tarjeta</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {renderInput('Nombre en la tarjeta', 'cardName')}
-        {renderInput('Número de tarjeta', 'cardNumber', 'tel')}
-        {renderInput('Expiración (MM/YY)', 'expDate', 'tel')}
-        {renderInput('CVV', 'cvv', 'tel')}
+    <div id="card-form" ref={formRef} className="space-y-4 col-span-2 bg-primary-50 p-6 rounded-lg">
+      <h2 className="text-lg font-bold mb-2 text-primary-900">Datos de la tarjeta</h2>
+
+      <input
+        type="text"
+        name="holder_name"
+        data-openpay-card="holder_name"
+        placeholder="Nombre del titular"
+        className="w-full p-3 border border-primary-200 rounded"
+        required
+      />
+
+      <input
+        type="text"
+        name="card_number"
+        data-openpay-card="card_number"
+        placeholder="Número de tarjeta"
+        className="w-full p-3 border border-primary-200 rounded"
+        required
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <input
+          type="text"
+          name="expiration_month"
+          data-openpay-card="expiration_month"
+          placeholder="Mes (MM)"
+          className="w-full p-3 border border-primary-200 rounded"
+          required
+        />
+        <input
+          type="text"
+          name="expiration_year"
+          data-openpay-card="expiration_year"
+          placeholder="Año (YY)"
+          className="w-full p-3 border border-primary-200 rounded"
+          required
+        />
       </div>
+
+      <input
+        type="text"
+        name="cvv2"
+        data-openpay-card="cvv2"
+        placeholder="Código de seguridad (CVV)"
+        className="w-full p-3 border border-primary-200 rounded"
+        required
+      />
+
+      <input type="hidden" name="deviceSessionId" id="deviceIdHiddenFieldName" />
     </div>
   )
 }
-
-export default CardDetails

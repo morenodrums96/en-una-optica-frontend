@@ -1,32 +1,74 @@
 import { API_URL } from '../api'
 
-type CardData = {
+export function getOpenPayToken(cardData: {
   card_number: string
   holder_name: string
   expiration_month: string
   expiration_year: string
   cvv2: string
-}
-
-export async function getOpenPayToken(cardData: CardData): Promise<{ tokenId: string }> {
-  try {
-    const res = await fetch(`${API_URL}/api/openpay/getOpenPayToken`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(cardData),
-    })
-
-    const data = await res.json()
-
-    if (!data.success) {
-      throw new Error(data.message || 'No se pudo generar el token')
+}): Promise<{ tokenIdOpenPay: string }> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined' || !window.OpenPay) {
+      return reject(new Error('OpenPay no está disponible en este entorno.'))
     }
 
-    return { tokenId: data.tokenId }
-  } catch (error: any) {
-    console.error('❌ Error al obtener token desde el frontend:', error)
-    throw new Error(error.message || 'Error desconocido al generar token')
+    try {
+      // Crear token con Openpay.js
+      window.OpenPay.token.create(cardData, (response: any) => {
+        const tokenIdOpenPay = response.data.id
+        resolve({ tokenIdOpenPay })
+      }, (error: any) => {
+        const message = error.data?.description || error.message || 'Error al generar el token con Openpay.'
+        reject(new Error(message))
+      })
+    } catch (err) {
+      reject(new Error('No se pudo crear el token: ' + err))
+    }
+  })
+}
+
+export async function createOrGetCustomer(data: {
+  anonymousId: string
+  name: string
+  email: string
+  phone: string
+  address: {
+    city: string
+    line1: string
+    line2?: string
+    postal_code: string
+    state: string
+    country_code: string
   }
+}) {
+  const res = await fetch(`${API_URL}/api/payments/create-customer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.message || 'No se pudo crear el cliente')
+  }
+
+  return res.json() // { id, name, ... }
+}
+
+export async function createCharge(data: {
+  anonymousId: string
+  tokenIdOpenPay: string
+}) {
+  const res = await fetch(`${API_URL}/api/payments/create-charge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.message || 'No se pudo generar el cargo')
+  }
+
+  return res.json();
 }

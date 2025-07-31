@@ -5,7 +5,8 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle } from 'lucide-react'
 import CardDetails from '@/components/CardDetails/CardDetails'
-import { getOpenPayToken } from '@/lib/checkoutApis/checkout'
+import { getOpenPayToken, createOrGetCustomer, createCharge } from '@/lib/checkoutApis/checkout'
+import { toast } from 'sonner'
 
 type CardForm = {
   cardName: string
@@ -99,7 +100,7 @@ export default function CheckoutPage() {
         return
       }
 
-      let anonymousId = localStorage.getItem('anonymousUserId')
+      const anonymousId = localStorage.getItem('anonymousUserId')
       if (!anonymousId) {
         setError('No se encontró el identificador de sesión.')
         setLoading(false)
@@ -112,23 +113,48 @@ export default function CheckoutPage() {
         card_number: cardData.cardNumber.replace(/\s/g, ''),
         holder_name: cardData.cardName,
         expiration_month: expMonth,
-        expiration_year: `20${expYear}`,
+        expiration_year: expYear,
         cvv2: cardData.cvv,
       }
 
-      const { tokenId } = await getOpenPayToken(formattedCardData)
+      const { tokenIdOpenPay } = await getOpenPayToken(formattedCardData)
 
-      console.log('✅ Token generado correctamente:', tokenId)
+      const fullName = `${form.name} ${form.lastName}`
 
-      // Aquí continuarás luego con la API del backend para cliente + cargo
+      const customer = await createOrGetCustomer({
+        anonymousId,
+        name: fullName,
+        email: form.email,
+        phone: form.phone,
+        address: {
+          city: form.city,
+          line1: `${form.street} ${form.externalNumber}`,
+          line2: form.internalNumber,
+          postal_code: form.postalCode,
+          state: form.state,
+          country_code: 'MX',
+        },
+      })
 
+      console.log('✅ Cliente obtenido o creado:', customer)
+
+      // 3️⃣ Crear el cargo
+      const charge = await createCharge({
+        anonymousId,
+        tokenIdOpenPay,
+      })
+
+      console.log('✅ Cargo realizado con éxito:', charge)
+      toast.success('¡Pago exitoso! Gracias por tu compra.')
+      // Aquí continuará el cargo
     } catch (err: any) {
-      console.error('❌ Error al generar token:', err)
-      setError(err.message || 'Error desconocido al generar el token')
+      console.error('❌ Error en proceso de pago:', err)
+      setError(err.message || 'Ocurrió un error inesperado.')
     } finally {
       setLoading(false)
     }
   }
+
 
 
   return (
