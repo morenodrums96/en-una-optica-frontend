@@ -59,21 +59,6 @@ export default function CheckoutPage() {
     subscribe: false,
   })
 
-  const isFormValid = () => {
-    return (
-      form.name.trim() &&
-      form.lastName.trim() &&
-      form.street.trim() &&
-      form.internalNumber.trim() &&
-      form.postalCode.trim() &&
-      form.state.trim() &&
-      form.city.trim() &&
-      form.neighborhood.trim() &&
-      form.phone.trim() &&
-      form.email.trim()
-    )
-  }
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -117,8 +102,11 @@ export default function CheckoutPage() {
         cvv2: cardData.cvv,
       }
 
+      // 1️⃣ Generar token de OpenPay
       const { tokenIdOpenPay } = await getOpenPayToken(formattedCardData)
+      console.log('✅ Token OpenPay:', tokenIdOpenPay)
 
+      // 3️⃣ Crear cliente en OpenPay
       const fullName = `${form.name} ${form.lastName}`
 
       const customer = await createOrGetCustomer({
@@ -136,9 +124,9 @@ export default function CheckoutPage() {
         },
       })
 
-      console.log('✅ Cliente obtenido o creado:', customer)
+      console.log('✅ Cliente creado u obtenido:', customer)
 
-      // 3️⃣ Crear el cargo
+      // 4️⃣ Crear cargo en OpenPay
       const charge = await createCharge({
         anonymousId,
         tokenIdOpenPay,
@@ -146,7 +134,9 @@ export default function CheckoutPage() {
 
       console.log('✅ Cargo realizado con éxito:', charge)
       toast.success('¡Pago exitoso! Gracias por tu compra.')
-      // Aquí continuará el cargo
+
+      // ⏳ Futuro: crear orden + envío
+
     } catch (err: any) {
       console.error('❌ Error en proceso de pago:', err)
       setError(err.message || 'Ocurrió un error inesperado.')

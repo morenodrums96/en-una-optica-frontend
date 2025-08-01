@@ -1,4 +1,11 @@
 import { API_URL } from '../api'
+type SkydropxAddress = {
+  country_code: string
+  postal_code: string
+  area_level1: string
+  area_level2: string
+  area_level3: string
+}
 
 export function getOpenPayToken(cardData: {
   card_number: string
