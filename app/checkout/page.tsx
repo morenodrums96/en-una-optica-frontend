@@ -40,8 +40,8 @@ export default function CheckoutPage() {
   const getCardDataRef = useRef<() => CardForm | null>(() => null)
   const isCardValidRef = useRef<() => boolean>(() => false)
 
-  const { cartItems, totalPrice, clearCart } = useCart()
-  const router = useRouter()
+  const { totalPrice } = useCart();
+
 
   const [form, setForm] = useState({
     name: '',
@@ -107,19 +107,22 @@ export default function CheckoutPage() {
       console.log('✅ Token OpenPay:', tokenIdOpenPay)
 
       // 3️⃣ Crear cliente en OpenPay
-      const fullName = `${form.name} ${form.lastName}`
 
       const customer = await createOrGetCustomer({
         anonymousId,
-        name: fullName,
+        name: form.name,
+        lastName: form.lastName,
         email: form.email,
         phone: form.phone,
         address: {
-          city: form.city,
-          line1: `${form.street} ${form.externalNumber}`,
-          line2: form.internalNumber,
           postal_code: form.postalCode,
           state: form.state,
+          city: form.city,
+          neighborhood: form.neighborhood,
+          street: form.street,
+          externalNumber: form.externalNumber,
+          internalNumber: form.internalNumber,
+          aditionalReferents:form.aditionalReferents,
           country_code: 'MX',
         },
       })
@@ -155,13 +158,13 @@ export default function CheckoutPage() {
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input name="name" label="Nombre(s)" value={form.name} onChange={handleChange} required />
           <Input name="lastName" label="Apellidos" value={form.lastName} onChange={handleChange} required />
-          <Input name="street" label="Calle" value={form.street} onChange={handleChange} required />
-          <Input name="internalNumber" label="Número interior" value={form.internalNumber} onChange={handleChange} required />
-          <Input name="externalNumber" label="Número exterior" value={form.externalNumber} onChange={handleChange} />
           <Input name="postalCode" label="C.P." value={form.postalCode} onChange={handleChange} required />
           <Input name="state" label="Estado" value={form.state} onChange={handleChange} required />
           <Input name="city" label="Ciudad" value={form.city} onChange={handleChange} required />
           <Input name="neighborhood" label="Colonia" value={form.neighborhood} onChange={handleChange} required />
+          <Input name="street" label="Calle" value={form.street} onChange={handleChange} required />
+          <Input name="externalNumber" label="Número exterior" value={form.externalNumber} onChange={handleChange} required/>
+          <Input name="internalNumber" label="Número interior" value={form.internalNumber} onChange={handleChange}  />
           <Input name="aditionalReferents" label="Referencias adicionales" value={form.aditionalReferents} onChange={handleChange} maxLength={300} />
           <Input name="phone" label="Teléfono" value={form.phone} onChange={handleChange} required />
           <Input name="email" type="email" label="Correo electrónico" value={form.email} onChange={handleChange} required />

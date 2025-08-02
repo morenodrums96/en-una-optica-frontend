@@ -37,14 +37,18 @@ export function getOpenPayToken(cardData: {
 export async function createOrGetCustomer(data: {
   anonymousId: string
   name: string
+  lastName: string
   email: string
   phone: string
   address: {
-    city: string
-    line1: string
-    line2?: string
     postal_code: string
     state: string
+    city: string
+    neighborhood: string
+    street: string
+    externalNumber: string
+    internalNumber: string
+    aditionalReferents: string
     country_code: string
   }
 }) {
